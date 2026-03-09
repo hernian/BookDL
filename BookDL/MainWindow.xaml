@@ -1,0 +1,76 @@
+﻿<Window x:Class="BookDL.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BookDL"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800" MinWidth="600" MinHeight="350">
+    <Grid Margin="10">
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="Padding" Value="16,4"/>
+                <Setter Property="Margin" Value="4"/>
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="4"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Margin" Value="4"/>
+            </Style>
+            <Style TargetType="StackPanel">
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Orientation" Value="Horizontal"/>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="URL"/>
+            <TextBox Grid.Row="0" Grid.Column="1" x:Name="urlTextBox"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="タイトル"/>
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="titleTextBox"/>
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="タイトル（カタカナ）"/>
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="katakanaTitleTextBox"/>
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="著者"/>
+            <TextBox Grid.Row="3" Grid.Column="1" x:Name="authorTextBox"/>
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="著者（カタカナ）"/>
+            <TextBox Grid.Row="4" Grid.Column="1" x:Name="katakanaAuthorTextBox"/>
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="出力ディレクトリ"/>
+            <TextBox Grid.Row="5" Grid.Column="1" x:Name="outputDirectoryTextBox"/>
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+                <Button Grid.Column="0" x:Name="loadButton" Content="設定読み込み"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                <Button x:Name="downloadButton" Content="ダウンロード"/>
+                <Button x:Name="cancelButton" Content="キャンセル"/>
+            </StackPanel>
+        </Grid>
+        <wv2:WebView2 Grid.Row="3" x:Name="webView" ZoomFactor="0.3">
+        </wv2:WebView2>
+    </Grid>
+</Window>

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BookDL/BookDL.csproj" />
+  <Project Path="HernianLib/HernianLib.shproj" Id="5810d069-a132-4828-aa58-463a3f5ff2e4" />
+</Solution>
