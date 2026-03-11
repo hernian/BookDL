@@ -9,6 +9,7 @@
     <Import_RootNamespace>HernianLib</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Controls\WebView2Contorl.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AngleSharp\AngleSharpHelper.cs" />
+    <Compile Include="..\HernianLib\Controls\WebView2Control.cs" />
   </ItemGroup>
 </Project>

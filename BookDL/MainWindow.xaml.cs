@@ -1,4 +1,9 @@
-﻿using System.Diagnostics;
+﻿using AngleSharp.Dom;
+using AngleSharp.Html.Parser;
+using HernianLib.Controls;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using HernianLib.Controls;
+using System.Xml.Linq;
 
 namespace BookDL
 {
@@ -18,22 +23,97 @@ namespace BookDL
     /// </summary>
     public partial class MainWindow : Window
     {
-        private WebView2Contorl _webViewControl;
+        private WebView2Control _webViewControl;
+        private CancellationTokenSource? _tcs;
+        private BookDownloadController _downloadController;
+
         public MainWindow()
         {
             InitializeComponent();
-            _webViewControl = new WebView2Contorl(webView);
+            _webViewControl = new WebView2Control(webView);
+            _downloadController = new BookDownloadController(_webViewControl);
             Loaded += MainWindow_Loaded;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.IsEnabled = false;
-            await _webViewControl.InitializeWebViewAsync();
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var dataFolderPath = System.IO.Path.Combine(localAppData, "Hernian\\BookDL");
+            await _webViewControl.InitializeWebViewAsync(dataFolderPath);
             this.IsEnabled = true;
-            await Task.Delay(5000);
-            var result = await _webViewControl.NavigateAsync("https://www.google.com");
-            Debug.WriteLine($"Navigation result: IsSuccess={result.IsSuccess}, HttpStatusCode={result.HttpStatusCode}, WebErrorStatus={result.WebErrorStatus}");
+        }
+        private CancellationToken NewTaskCancellationToken()
+        {
+            if (_tcs != null)
+            {
+                throw new InvalidOperationException("A cancellation token source is already active. Cancel it before creating a new one");
+            }
+            _tcs = new CancellationTokenSource();
+            cancelButton.IsEnabled = true;
+            return _tcs.Token;
+        }
+
+        private void FreeTaskCancellationToken()
+        {
+            _tcs?.Dispose();
+            _tcs = null;
+            cancelButton.IsEnabled = false;
+        }
+
+        private async void analyzeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!analyzeButton.IsEnabled)
+            {
+                return;
+            }
+            analyzeButton.IsEnabled = false;
+            downloadButton.IsEnabled = false;
+            var ct = NewTaskCancellationToken();
+            try
+            {
+                var bookSource = await _downloadController.GetInfoAsync(urlTextBox.Text, ct);
+                titleTextBox.Text = bookSource.Title;
+                authorTextBox.Text = bookSource.Author;
+                downloadButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"An error occurred during analysis: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                FreeTaskCancellationToken();
+                analyzeButton.IsEnabled = true;
+            }
+        }
+
+        private async void downloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!downloadButton.IsEnabled)
+            {
+                return;
+            }
+            downloadButton.IsEnabled = false;
+            var ct = NewTaskCancellationToken();
+            try
+            {
+                await _downloadController.DownloadAsync(
+                    titleTextBox.Text,
+                    titleKanaTextBox.Text,
+                    authorTextBox.Text,
+                    authorKanaTextBox.Text,
+                    outputDirectoryTextBox.Text, ct);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"An error occurred during download: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                FreeTaskCancellationToken();
+                downloadButton.IsEnabled = true;
+            }
         }
     }
 }

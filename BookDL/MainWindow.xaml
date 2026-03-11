@@ -31,7 +31,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Grid.IsSharedSizeScope="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -45,15 +45,22 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="URL"/>
-            <TextBox Grid.Row="0" Grid.Column="1" x:Name="urlTextBox"/>
+            <Grid Grid.Row="0" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" x:Name="urlTextBox" VerticalAlignment="Center"/>
+                <Button x:Name="analyzeButton" Grid.Column="1" Content="解析" Click="analyzeButton_Click"/>
+            </Grid>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="タイトル"/>
             <TextBox Grid.Row="1" Grid.Column="1" x:Name="titleTextBox"/>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="タイトル（カタカナ）"/>
-            <TextBox Grid.Row="2" Grid.Column="1" x:Name="katakanaTitleTextBox"/>
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="titleKanaTextBox"/>
             <TextBlock Grid.Row="3" Grid.Column="0" Text="著者"/>
             <TextBox Grid.Row="3" Grid.Column="1" x:Name="authorTextBox"/>
             <TextBlock Grid.Row="4" Grid.Column="0" Text="著者（カタカナ）"/>
-            <TextBox Grid.Row="4" Grid.Column="1" x:Name="katakanaAuthorTextBox"/>
+            <TextBox Grid.Row="4" Grid.Column="1" x:Name="authorKanaTextBox"/>
             <TextBlock Grid.Row="5" Grid.Column="0" Text="出力ディレクトリ"/>
             <TextBox Grid.Row="5" Grid.Column="1" x:Name="outputDirectoryTextBox"/>
         </Grid>
@@ -66,7 +73,7 @@
                 <Button Grid.Column="0" x:Name="loadButton" Content="設定読み込み"/>
             </StackPanel>
             <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                <Button x:Name="downloadButton" Content="ダウンロード"/>
+                <Button x:Name="downloadButton" Content="ダウンロード" Click="downloadButton_Click"/>
                 <Button x:Name="cancelButton" Content="キャンセル"/>
             </StackPanel>
         </Grid>

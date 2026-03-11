@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
   </ItemGroup>
 
