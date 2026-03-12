@@ -105,12 +105,7 @@ namespace BookDL
             var ct = NewTaskCancellationToken();
             try
             {
-                await _downloadController.DownloadAsync(
-                    titleTextBox.Text,
-                    titleKanaTextBox.Text,
-                    authorTextBox.Text,
-                    authorKanaTextBox.Text,
-                    outputDirectoryTextBox.Text, ct);
+                await _downloadController.DownloadAsync(urlTextBox.Text, titleTextBox.Text, outputDirectoryTextBox.Text, ct);
             }
             catch (Exception ex)
             {

@@ -13,6 +13,12 @@ namespace BookDL
     internal class BookDownloadController
     {
         private const string BOOK_SOURCE_NOT_INITIALIZED = "Book source is not initialized. Call GetInfoAsync first.";
+        private static bool UrlEquals(string urlA, string urlB)
+        {
+            var a = new Uri(urlA);
+            var b = new Uri(urlB);
+            return a == b;
+        }
 
         private static IBookSource CreateBookSource(WebView2Control wv2c, string urlBook)
         {
@@ -96,11 +102,11 @@ namespace BookDL
             }, ct);
         }
 
-        public async Task DownloadAsync(string title, string titleKana, string author, string authorKana, string outputDir, CancellationToken ct)
+        public async Task DownloadAsync(string bookUrl,string title, string outputDir, CancellationToken ct)
         {
-            if (_bookSource == null)
+            if (_bookSource == null || !UrlEquals(_bookSource.BookUrl, bookUrl))
             {
-                throw new InvalidOperationException(BOOK_SOURCE_NOT_INITIALIZED);
+                _bookSource = await GetInfoAsync(bookUrl, ct);
             }
             ct.ThrowIfCancellationRequested();
             var fileNameBase = BookConverter.GetFileNameFromTitle(title);
@@ -132,5 +138,6 @@ namespace BookDL
                 throw;
             }
         }
+
     }
 }
