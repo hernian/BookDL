@@ -7,7 +7,20 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" MinWidth="600" MinHeight="350">
-    <Grid Margin="10">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="ファイル(_F)">
+                <MenuItem x:Name="menuNewSettings" Header="新規(_N)" Click="menuNewSettings_Click"/>
+                <MenuItem x:Name="menuLoadSettings" Header="開く(_O)..." Click="menuLoadSettings_Click"/>
+                <MenuItem x:Name="menuSaveSettings" Header="保存(_S)..." Click="menuSaveSettings_Click"/>
+                <Separator/>
+                <MenuItem x:Name="menuExit" Header="終了(_X)" Click="menuExit_Click"/>
+            </MenuItem>
+            <MenuItem Header="ヘルプ(_H)">
+                <MenuItem x:Name="menuAbout" Header="バージョン情報(_A)..." Click="menuAbout_Click"/>
+            </MenuItem>
+        </Menu>
+        <Grid Margin="10">
         <Grid.Resources>
             <Style TargetType="Button">
                 <Setter Property="Padding" Value="16,4"/>
@@ -80,4 +93,5 @@
         <wv2:WebView2 Grid.Row="3" x:Name="webView" ZoomFactor="0.3">
         </wv2:WebView2>
     </Grid>
+    </DockPanel>
 </Window>
