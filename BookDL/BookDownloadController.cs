@@ -6,11 +6,12 @@ using System.IO;
 using System.Text;
 using System.Threading.Channels;
 using System.Windows.Markup;
+using BookDL.Parser;
 using HernianLib.Controls;
 
 namespace BookDL
 {
-    internal class BookDownloadController
+    public class BookDownloadController
     {
         private const string BOOK_SOURCE_NOT_INITIALIZED = "Book source is not initialized. Call GetInfoAsync first.";
         private static bool UrlEquals(string urlA, string urlB)
@@ -18,19 +19,6 @@ namespace BookDL
             var a = new Uri(urlA);
             var b = new Uri(urlB);
             return a == b;
-        }
-
-        private static IBookSource CreateBookSource(WebView2Control wv2c, string urlBook)
-        {
-            var uri = new Uri(urlBook);
-            if (uri.Host.EndsWith("syosetu.com", StringComparison.OrdinalIgnoreCase))
-            {
-                return new Parser.Narou.NarouBookSource(wv2c, urlBook);
-            }
-            else
-            {
-                throw new NotSupportedException($"The host '{uri.Host}' is not supported.");
-            }
         }
 
         private WebView2Control _webView2Control;
@@ -44,7 +32,7 @@ namespace BookDL
         public async Task<IBookSource> GetInfoAsync(string bookUrl, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            _bookSource = CreateBookSource(_webView2Control, bookUrl);
+            _bookSource = BookSourceFactory.TheInstance.CreateBookSource(_webView2Control, bookUrl);
             await _bookSource.GetInfoAsync(ct);
             return _bookSource;
         }
