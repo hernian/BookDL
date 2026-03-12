@@ -85,11 +85,13 @@ namespace BookDL
                 Directory.CreateDirectory(outputDir);
                 using (var bookWriter = new ZipBookWriter(outputBookTempPath))
                 {
+                    var sectionIndex = 1;
                     await foreach (var section in channel.Reader.ReadAllAsync(ct))
                     {
                         ct.ThrowIfCancellationRequested();
                         var sectionFileNameBase = BookConverter.GetFileNameFromTitle(section.Title);
-                        var sectionFileName = $"{sectionFileNameBase}.txt";
+                        var sectionFileName = $"sction{sectionIndex:D5}_{sectionFileNameBase}.txt";
+                        sectionIndex++;
                         using var writer = bookWriter.CreateSectionWriter(sectionFileName);
                         writer.WriteLine(section.Title);
                         foreach (var paragraph in section.Paragraphs)
