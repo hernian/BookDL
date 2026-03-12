@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using HernianLib.AngleSharp;
 
-namespace BookDL.Parser
+namespace BookDL.Parser.Narou
 {
     internal class NarouSectionSource : ISectionSource
     {

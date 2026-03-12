@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using AngleSharp.Html.Parser;
 
-namespace BookDL.Parser
+namespace BookDL.Parser.Narou
 {
     public class NarouBookSource : IBookSource
     {

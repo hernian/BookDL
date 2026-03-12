@@ -25,7 +25,7 @@ namespace BookDL
             var uri = new Uri(urlBook);
             if (uri.Host.EndsWith("syosetu.com", StringComparison.OrdinalIgnoreCase))
             {
-                return new Parser.NarouBookSource(wv2c, urlBook);
+                return new Parser.Narou.NarouBookSource(wv2c, urlBook);
             }
             else
             {
