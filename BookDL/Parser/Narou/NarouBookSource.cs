@@ -1,16 +1,7 @@
-﻿using AngleSharp;
-using AngleSharp.Dom;
+﻿using AngleSharp.Html.Parser;
 using HernianLib.AngleSharp;
 using HernianLib.Controls;
-using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.WinForms;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text;
-using AngleSharp.Html.Parser;
 
 namespace BookDL.Parser.Narou
 {
@@ -28,6 +19,11 @@ namespace BookDL.Parser.Narou
 
         private readonly WebView2Control _webViewControl;
         private readonly HtmlParser _parser = new HtmlParser();
+        static NarouBookSource()
+        {
+            var factory = BookSourceFactory.TheInstance;
+            factory.RegisterBookSource(".syosetu.com", (webViewControl, bookUrl) => new NarouBookSource(webViewControl, bookUrl));
+        }
 
         public NarouBookSource(WebView2Control webViewControl, string bookUrl)
         {
