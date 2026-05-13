@@ -1,0 +1,42 @@
+﻿<Window x:Class="BookDL.Presentation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BookDL.Presentation"
+        xmlns:vm="clr-namespace:BookDL.ViewModels"
+        Title="MainWindow"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <local:BindingProxy x:Key="WindowProxy" Data="{Binding}" />
+        <DataTemplate x:Key="SettingsTemplate">
+            <local:SettingsControl DataContext="{Binding Data, Source={StaticResource WindowProxy}}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ManipulateTemplate">
+            <local:ManipulateControl DataContext="{Binding Data, Source={StaticResource WindowProxy}}" />
+        </DataTemplate>
+        <DataTemplate x:Key="AnalyzeTemplate">
+            <local:AnalizeControl  DataContext="{Binding Data, Source={StaticResource WindowProxy}}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ProgressTemplate">
+            <local:ProgressControl  DataContext="{Binding Data, Source={StaticResource WindowProxy}}" />
+        </DataTemplate>
+        <Style TargetType="ContentControl">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding AppMode}" Value="{x:Static vm:AppModeKind.Settings}">
+                    <Setter Property="ContentTemplate" Value="{StaticResource SettingsTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding AppMode}" Value="{x:Static vm:AppModeKind.Manipulate}">
+                    <Setter Property="ContentTemplate" Value="{StaticResource ManipulateTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding AppMode}" Value="{x:Static vm:AppModeKind.Analyze}">
+                    <Setter Property="ContentTemplate" Value="{StaticResource AnalyzeTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding AppMode}" Value="{x:Static vm:AppModeKind.Progress}">
+                    <Setter Property="ContentTemplate" Value="{StaticResource ProgressTemplate}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <ContentControl />
+</Window>

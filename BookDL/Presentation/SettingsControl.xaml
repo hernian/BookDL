@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="BookDL.Presentation.SettingsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:BookDL.Presentation"
+             mc:Ignorable="d">
+    <DockPanel Width="800" Height="Auto">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="New"/>
+                <MenuItem Header="Open..."/>
+                <MenuItem Header="Save..."/>
+            </MenuItem>
+            <MenuItem Header="_Other">
+                <MenuItem Header="About..." Command="{Binding AboutCommand}"/>
+                <MenuItem Header="Config..." Command="{Binding ConfigCommand}"/>
+            </MenuItem>
+        </Menu>
+        <Grid Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0">本のURL</TextBlock>
+            <Grid Grid.Row="0" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding BookUrl}"/>
+                <Button Content="操作" Grid.Row="0" Grid.Column="1" Command="{Binding ManipulateCommand}" />
+                <Button Content="解析" Grid.Row="0" Grid.Column="2" Command="{Binding AnalyzeCommand}" />
+            </Grid>
+            <TextBlock Grid.Row="1" Grid.Column="0">タイトル</TextBlock>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Title}"/>
+            <TextBlock Grid.Row="2" Grid.Column="0"> タイトル(カタカナ)</TextBlock>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TitleKatakana}"/>
+            <TextBlock Grid.Row="3" Grid.Column="0">著者</TextBlock>
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Author}"/>
+            <TextBlock Grid.Row="4" Grid.Column="0">著者(カタカナ)</TextBlock>
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorKatakana}"/>
+            <TextBlock Text="出力ディレクトリ" Grid.Row="5" Grid.Column="0"/>
+            <Grid Grid.Row="5" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding OutputDirectory}"/>
+                <Button Grid.Row="0" Grid.Column="1" Content="推奨値" />
+                <Button Grid.Row="0" Grid.Column="2" Content="参照..." />
+            </Grid>
+            <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Button Grid.Row="0" Grid.Column="1" Content="Download" HorizontalAlignment="Left" Command="{Binding DownloadCommand}" />
+                <Button Grid.Row="0" Grid.Column="2" Content="出力ディレクトリを開く" HorizontalAlignment="Left" />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>
