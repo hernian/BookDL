@@ -4,6 +4,7 @@ using BookDL.Presentation;
 using System.Configuration;
 using System.Data;
 using System.Windows;
+using BookDL.Services;
 
 namespace BookDL
 {
@@ -15,7 +16,8 @@ namespace BookDL
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             var settingsService = new SettingsService();
-            var mainViewModel = new MainViewModel(settingsService);
+            var applicationService = new ApplicationService(settingsService);
+            var mainViewModel = new MainViewModel(settingsService, applicationService);
             var mainWindow = new MainWindow(mainViewModel);
             this.MainWindow = mainWindow;
             mainWindow.Show();

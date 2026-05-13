@@ -41,18 +41,18 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding BookUrl}"/>
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding BookUrl, UpdateSourceTrigger=PropertyChanged}"/>
                 <Button Content="操作" Grid.Row="0" Grid.Column="1" Command="{Binding ManipulateCommand}" />
                 <Button Content="解析" Grid.Row="0" Grid.Column="2" Command="{Binding AnalyzeCommand}" />
             </Grid>
             <TextBlock Grid.Row="1" Grid.Column="0">タイトル</TextBlock>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Title}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBlock Grid.Row="2" Grid.Column="0"> タイトル(カタカナ)</TextBlock>
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TitleKatakana}"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TitleKatakana, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBlock Grid.Row="3" Grid.Column="0">著者</TextBlock>
-            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Author}"/>
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBlock Grid.Row="4" Grid.Column="0">著者(カタカナ)</TextBlock>
-            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorKatakana}"/>
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorKatakana, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBlock Text="出力ディレクトリ" Grid.Row="5" Grid.Column="0"/>
             <Grid Grid.Row="5" Grid.Column="1">
                 <Grid.ColumnDefinitions>
@@ -63,9 +63,9 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding OutputDirectory}"/>
-                <Button Grid.Row="0" Grid.Column="1" Content="推奨値" />
-                <Button Grid.Row="0" Grid.Column="2" Content="参照..." />
+                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Row="0" Grid.Column="1" Content="推奨値" Command="{Binding CreateOutputDirectoryPathCommand}" />
+                <Button Grid.Row="0" Grid.Column="2" Content="参照..." Command="{Binding BrowseOutputDirectoryCommand}" />
             </Grid>
             <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
@@ -77,7 +77,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Button Grid.Row="0" Grid.Column="1" Content="Download" HorizontalAlignment="Left" Command="{Binding DownloadCommand}" />
-                <Button Grid.Row="0" Grid.Column="2" Content="出力ディレクトリを開く" HorizontalAlignment="Left" />
+                <Button Grid.Row="0" Grid.Column="2" Content="出力ディレクトリを開く" HorizontalAlignment="Left" Command="{Binding OpenOutputDirectoryCommand}" />
             </Grid>
         </Grid>
     </DockPanel>

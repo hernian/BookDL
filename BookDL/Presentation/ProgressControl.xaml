@@ -14,9 +14,11 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">ダウンロードしています</TextBlock>
-        <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Minimum="0" Maximum="1" Value="{Binding DownloadProgress}" Height="10" Width="Auto" Margin="0,5,0,5"/>
-        <Button Grid.Row="2" Grid.Column="1" Content="Cancel" Command="{Binding CancelDownloadCommand}" Margin="10"/>
+        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="progressText"/>
+        <ProgressBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Minimum="0" Maximum="1" x:Name="progressBar"  Height="10" Width="Auto" Margin="0,5,0,5"/>
+        <Button Grid.Row="3" Grid.Column="1" Content="Cancel" Command="{Binding DownloadCancelCommand}" Margin="10"/>
     </Grid>
 </UserControl>

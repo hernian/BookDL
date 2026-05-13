@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BookDL.Presentation"
         xmlns:vm="clr-namespace:BookDL.ViewModels"
-        Title="MainWindow"
-        SizeToContent="WidthAndHeight">
+        Title="BookDL"
+        SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Window.Resources>
         <local:BindingProxy x:Key="WindowProxy" Data="{Binding}" />
         <DataTemplate x:Key="SettingsTemplate">

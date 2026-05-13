@@ -4,7 +4,6 @@ using BookDL.Presentation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Windows.Controls.Primitives;
 
 namespace BookDL.ViewModels
 {
@@ -46,6 +45,8 @@ namespace BookDL.ViewModels
         private void OK()
         {
             _settingsService.OutputDataKind = SelectedItem?.Kind ?? throw new InvalidOperationException("No outputDataKind selected.");
+            _settingsService.OutputDirectory = this.OutputDirectory;
+            _settingsService.Save();
             this.CloseDialogRequired?.Invoke(this, new DialogResultEventArgs(dialogResult: true));
         }
 

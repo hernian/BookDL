@@ -12,6 +12,7 @@ using System.Windows.Shapes;
 using BookDL.ViewModels;
 using BookDL.Infrastructure;
 using System.Windows.Automation.Provider;
+using System.ComponentModel;
 
 namespace BookDL.Presentation
 {
@@ -20,13 +21,21 @@ namespace BookDL.Presentation
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MainViewModel _viewModel;
         public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
+
+            this.Closing += MainWindow_Closing;
+
             DataContext = viewModel;
-            _viewModel = viewModel;
-            _viewModel.ConfigRequired += viewModel_ConfigRequired;
+            viewModel.ConfigRequired += viewModel_ConfigRequired;
+        }
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            if (this.DataContext is MainViewModel vm)
+            {
+                vm.SaveCurrentState();
+            }
         }
 
         private void viewModel_ConfigRequired(object? sender, ConfigRequiredEventArgs e)
