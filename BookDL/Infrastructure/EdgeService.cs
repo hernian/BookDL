@@ -9,7 +9,6 @@ namespace BookDL.Infrastructure
 {
     public interface IBrowserService : IDisposable
     {
-        void SetWindowOwner(IntPtr hWndTarget);
         void SetBrowserForeground();
         void Navigate(string url);
         void RunJavaScript(string script);
@@ -18,7 +17,13 @@ namespace BookDL.Infrastructure
         string GetDom();
     }
 
-    public class EdgeService : IBrowserService
+    public interface IBrowserWindow
+    {
+        event EventHandler? BrowserClosed;
+        IntPtr GetBrowserWindow();
+    }
+
+    public class EdgeService : IBrowserService, IBrowserWindow
     {
         private static readonly TagLog<EdgeService> Log = new();
 
@@ -106,9 +111,9 @@ namespace BookDL.Infrastructure
             GC.SuppressFinalize(this);
         }
 
-        public void SetWindowOwner(IntPtr hWndTarget)
+        public IntPtr GetBrowserWindow()
         {
-            WinApi.SetWindowOwner(hWndTarget, _hWnd);
+            return _hWnd;
         }
 
         public void SetBrowserForeground()

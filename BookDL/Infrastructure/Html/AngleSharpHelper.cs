@@ -1,34 +1,58 @@
-﻿using AngleSharp.Html.Dom;
-using AngleSharp;
+﻿using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Html;
+using AngleSharp.Html.Dom;
+using BookDL.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using BookDL.Domain;
-using AngleSharp.Dom;
+using System.IO;
 
 namespace BookDL.Infrastructure.Html
 {
     public static class AngleSharpHelper
     {
-        public static IHtmlDocument ParseDocument(string html, string url)
+        public static async Task<IHtmlDocument> ParseDocumentAsync(string html, string url)
         {
             var config = Configuration.Default;
             var context = new BrowsingContext(config);
-            var doc = context.OpenAsync(resp =>
+            var unkdownDoc = await context.OpenAsync(resp =>
             {
                 resp.Address(url);
                 resp.Content(html);
-            }).GetAwaiter().GetResult() as IHtmlDocument;
-            if (doc == null)
+            });
+            if (unkdownDoc == null || unkdownDoc is not IHtmlDocument htmlDoc)
             {
                 throw new InvalidOperationException("Html parse error");
             }
-            return doc;
+            return htmlDoc;
         }
 
-        public static ParagraphNode ConvertParagraph(IHtmlElement srcElement)
+        public static async Task<IHtmlDocument> ParseDocumentAsync(Stream stream, string url)
         {
-            var nodeList = new List<IBookNode>();
+            var config = Configuration.Default;
+            var context = new BrowsingContext(config);
+            var unkdownDoc = await context.OpenAsync(resp =>
+            {
+                resp.Address(url);
+                resp.Content(stream);
+            });
+            if (unkdownDoc == null || unkdownDoc is not IHtmlDocument htmlDoc)
+            {
+                throw new InvalidOperationException("Html parse error");
+            }
+            return htmlDoc;
+        }
+
+        public static bool IsSeparator(IHtmlElement srcElement)
+        {
+            return string.IsNullOrWhiteSpace(srcElement.TextContent)
+                && srcElement.Children.Count == 1
+                && srcElement.Children[0].TagName.ToLower() == "br";
+        }
+
+        public static IEnumerable<IBookNode> ConvertParagraph(IHtmlElement srcElement)
+        {
             var sb = new StringBuilder();
             foreach (var node in srcElement.ChildNodes)
             {
@@ -41,10 +65,10 @@ namespace BookDL.Infrastructure.Html
                 {
                     if (sb.Length > 0)
                     {
-                        nodeList.Add(new TextNode(sb.ToString()));
+                        yield return new TextNode(sb.ToString());
                         sb.Clear();
                     }
-                    nodeList.Add(new BreakRowNode());
+                    yield return new BreakRowNode();
                     continue;
                 }
                 if (node is IHtmlElement childElement)
@@ -54,10 +78,10 @@ namespace BookDL.Infrastructure.Html
                     {
                         if (sb.Length > 0)
                         {
-                            nodeList.Add(new TextNode(sb.ToString()));
+                            yield return new TextNode(sb.ToString());
                             sb.Clear();
                         }
-                        nodeList.Add(ConvertRuby(childElement));
+                        yield return ConvertRuby(childElement);
                         continue;
                     }
                     sb.Append(childElement.TextContent);
@@ -67,9 +91,8 @@ namespace BookDL.Infrastructure.Html
             var lastText = sb.ToString();
             if (!string.IsNullOrWhiteSpace(lastText))
             {
-                nodeList.Add(new TextNode(lastText));
+                yield return new TextNode(lastText);
             }
-            return new ParagraphNode(nodeList);
         }
 
         private static RubyNode ConvertRuby(IHtmlElement srcElement)

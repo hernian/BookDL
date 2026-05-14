@@ -6,7 +6,7 @@ namespace BookDL.Domain
 {
     public enum OutputDataKind
     {
-        EPUB,
-        SINGLE_HTML
+        EPub,
+        SingleHtml
     }
 }

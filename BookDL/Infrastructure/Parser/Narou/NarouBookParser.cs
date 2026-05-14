@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BookDL.Infrastructure.Html;
 using OpenQA.Selenium.DevTools.V146.CSS;
+using AngleSharp.Dom;
 
 namespace BookDL.Infrastructure.Parser.Narou
 {
@@ -66,7 +67,7 @@ namespace BookDL.Infrastructure.Parser.Narou
             else
             {
                 author = authorAnchorElement.TextContent.Trim();
-                authorKatakana = GetAuthorKatakana(browserService, authorAnchorElement.Href);
+                authorKatakana = await GetAuthorKatakanaAsync(browserService, authorAnchorElement.Href);
             }
             var firstEpisodeUrl = GetFirstEpisodeUrl(doc);
             if (string.IsNullOrWhiteSpace(firstEpisodeUrl))
@@ -82,12 +83,12 @@ namespace BookDL.Infrastructure.Parser.Narou
             return new NarouBookParser(browserService, bookInfo, firstEpisodeUrl);
         }
 
-        private static string GetAuthorKatakana(IBrowserService browserService, string authorPageUrl)
+        private static async Task<string> GetAuthorKatakanaAsync(IBrowserService browserService, string authorPageUrl)
         {
             browserService.Navigate(authorPageUrl);
             var currentUrl = browserService.GetCurrentUrl();
             var html = browserService.GetDom();
-            var doc = AngleSharpHelper.ParseDocument(html, currentUrl);
+            var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
             var katakanaAuthor = doc.QuerySelector(KATAKANA_AUTHOR_SELECTOR)?.TextContent.Trim() ?? string.Empty;
             return katakanaAuthor;
         }
@@ -127,7 +128,7 @@ namespace BookDL.Infrastructure.Parser.Narou
             return Task<BookInfo>.FromResult(_bookInfo);
         }
 
-        public Task<Book> DownloadBookAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct)
+        public async Task<Book> DownloadBookAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct)
         {
             var visitedUrls = new HashSet<string>();
             var firstEpisode = default(Episode);
@@ -146,7 +147,7 @@ namespace BookDL.Infrastructure.Parser.Narou
                 _browserService.Navigate(episodeUrl);
                 var currentUrl = _browserService.GetCurrentUrl();
                 var html = _browserService.GetDom();
-                var doc = AngleSharpHelper.ParseDocument(html, currentUrl);
+                var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
                 var episodeInfo = ParseEpisode(doc);
                 if (!string.IsNullOrWhiteSpace(episodeInfo.ChapterTitle))
                 {
@@ -179,8 +180,7 @@ namespace BookDL.Infrastructure.Parser.Narou
                 chapterList.Add(chapter);
             }
 
-            var book = new Book(bookInfo, chapterList);
-            return Task<Book>.FromResult(book);
+            return new Book(bookInfo, chapterList);
         }
 
         private EpirodeInfo ParseEpisode(IHtmlDocument doc)
@@ -214,6 +214,7 @@ namespace BookDL.Infrastructure.Parser.Narou
 
             var paragraphList = new List<ParagraphNode>();
             var srcParas = doc.QuerySelectorAll(PARAGRAPHS_SELECTOR);
+            var nodeList = new List<IBookNode>();
             foreach (IHtmlElement srcPara in srcParas)
             {
                 var id = srcPara.Id;
@@ -221,8 +222,26 @@ namespace BookDL.Infrastructure.Parser.Narou
                 {
                     continue;
                 }
-                var paragraph = AngleSharpHelper.ConvertParagraph(srcPara);
-                paragraphList.Add(paragraph);
+                if (AngleSharpHelper.IsSeparator(srcPara))
+                {
+                    if (nodeList.Count > 0)
+                    {
+                        var para = new ParagraphNode(nodeList);
+                        paragraphList.Add(para);
+                        nodeList = new List<IBookNode>();
+                    }
+                    continue;
+                }
+                if (nodeList.Count > 0)
+                {
+                    nodeList.Add(new BreakRowNode());
+                }
+                nodeList.AddRange(AngleSharpHelper.ConvertParagraph(srcPara));
+            }
+            if (nodeList.Count > 0)
+            {
+                var para = new ParagraphNode(nodeList);
+                paragraphList.Add(para);
             }
 
             var episode = new Episode(

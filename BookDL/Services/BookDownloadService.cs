@@ -1,6 +1,7 @@
 ﻿using BookDL.Domain;
 using BookDL.Infrastructure;
 using BookDL.Infrastructure.Parser;
+using BookDL.Infrastructure.Generator;
 
 namespace BookDL.Services
 {
@@ -13,9 +14,8 @@ namespace BookDL.Services
     {
         Task InitializeAsync();
         Task<BookInfo> AnalyzeAsync(string bookUrl, CancellationToken ct);
-        Task DownloadAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct);
+        Task DownloadAsync(BookInfo bookInfo, string outputDirectory, IProgress<DownloadReport> progress, CancellationToken ct);
     }
-
 
     public class BookDownloadService : IBookDownloadService
     {
@@ -23,15 +23,19 @@ namespace BookDL.Services
         private readonly ISettingsService _settingsService;
         private readonly IBookParserFactory _bookParserFactory;
         private readonly Lazy<IBrowserService> _browserService;
+        private readonly IGeneratorFactory _generatorFactory;
+
         public BookDownloadService(
             ISettingsService settingsService,
             IBookParserFactory bookParserFactory,
-            Lazy<IBrowserService> browserService
+            Lazy<IBrowserService> browserService,
+            IGeneratorFactory generatorFactory
             )
         {
             _settingsService = settingsService;
             _bookParserFactory = bookParserFactory;
             _browserService = browserService;
+            _generatorFactory = generatorFactory;
         }
 
         public void Dispose()
@@ -65,7 +69,7 @@ namespace BookDL.Services
             }, ct);
         }
 
-        public Task DownloadAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct)
+        public Task DownloadAsync(BookInfo bookInfo, string outputDirectory, IProgress<DownloadReport> progress, CancellationToken ct)
         {
             return Task.Run(async () =>
             {
@@ -75,6 +79,8 @@ namespace BookDL.Services
                     throw new NotSupportedSiteException(bookInfo.BookUrl);
                 }
                 var book = await bookParser.DownloadBookAsync(bookInfo, progress, ct);
+                var generator = _generatorFactory.CreateGenerator(_settingsService.OutputDataKind, book, outputDirectory);
+                await generator.GenerateOutputAsync(ct);
             }, ct);
         }
     }

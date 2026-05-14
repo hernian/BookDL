@@ -55,15 +55,15 @@ namespace BookDL.ViewModels
         private DownloadReport downloadReport = new DownloadReport(0, 0, 0);
 
         private readonly ISettingsService _settingsService;
-        private readonly IBookDownloadService _applicationService;
+        private readonly IBookDownloadService _bookDownloadService;
 
         public MainViewModel(
             ISettingsService settingsService,
-            IBookDownloadService applicationService
+            IBookDownloadService bookDownloadService
             )
         {
             _settingsService = settingsService;
-            _applicationService = applicationService;
+            _bookDownloadService = bookDownloadService;
             var currentState = _settingsService.CurrentState;
             this.BookUrl = currentState.BookInfo.BookUrl;
             this.Title = currentState.BookInfo.Title;
@@ -71,6 +71,11 @@ namespace BookDL.ViewModels
             this.Author = currentState.BookInfo.Author;
             this.AuthorKatakana = currentState.BookInfo.AuthorKatakana;
             this.OutputDirectory = currentState.OutputDirectory;
+        }
+
+        public Task InitializeAsync()
+        {
+            return _bookDownloadService.InitializeAsync();
         }
 
         [RelayCommand(CanExecute = nameof(CanManipulate))]
@@ -97,7 +102,7 @@ namespace BookDL.ViewModels
             try
             {
                 var bookUrl = this.BookUrl;
-                var bookInfo = await _applicationService.AnalyzeAsync(bookUrl, ct);
+                var bookInfo = await _bookDownloadService.AnalyzeAsync(bookUrl, ct);
                 this.Title = bookInfo.Title;
                 this.TitleKatakana = bookInfo.TitleKatakana;
                 this.Author = bookInfo.Author;
@@ -145,8 +150,11 @@ namespace BookDL.ViewModels
             try
             {
                 var bookInfo = GetBookInfo();
+                _settingsService.CurrentState = new CurrentState(bookInfo, this.OutputDirectory);
+                _settingsService.Save();
+                var outputDirectory = this.OutputDirectory;
                 var progress = new Progress<DownloadReport>(DownloadReportChanged);
-                await _applicationService.DownloadAsync(bookInfo, progress, ct);
+                await _bookDownloadService.DownloadAsync(bookInfo, outputDirectory, progress, ct);
             }
             catch (Exception ex)
             {
@@ -205,11 +213,13 @@ namespace BookDL.ViewModels
             this.ConfigRequired?.Invoke(this, eventArgs);
         }
 
-        public void SaveCurrentState()
+        public void Cleanup()
         {
             var bookInfo = GetBookInfo();
             _settingsService.CurrentState = new CurrentState(bookInfo, this.OutputDirectory);
             _settingsService.Save();
+
+            _bookDownloadService.Dispose();
         }
 
         private BookInfo GetBookInfo()

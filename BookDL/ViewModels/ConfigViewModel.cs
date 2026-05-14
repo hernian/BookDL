@@ -16,8 +16,8 @@ namespace BookDL.ViewModels
     public partial class ConfigViewModel : ObservableObject
     {
         private static readonly OutputDataKindItem[] OUTPUT_DATA_KIND_ITEMS = [
-            new OutputDataKindItem("EPub", OutputDataKind.EPUB),
-            new OutputDataKindItem("Single-Html", OutputDataKind.SINGLE_HTML)
+            new OutputDataKindItem("EPub", OutputDataKind.EPub),
+            new OutputDataKindItem("Single-Html", OutputDataKind.SingleHtml)
             ];
 
 

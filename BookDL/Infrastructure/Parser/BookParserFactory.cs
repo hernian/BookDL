@@ -27,7 +27,7 @@ namespace BookDL.Infrastructure.Parser
             browserService.Navigate(bookUrl);
             var html = browserService.GetDom();
             var currentUrl = browserService.GetCurrentUrl();
-            var doc = AngleSharpHelper.ParseDocument(html, currentUrl);
+            var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
             foreach (var (name, createAsync) in _creatorList)
             {
                 ct.ThrowIfCancellationRequested();

@@ -8,7 +8,7 @@ namespace BookDL.Domain
     {
         public override string ToString()
         {
-            return (Start == End) ? $"{Start + 1}" : $"{Start + 1}～{End + 1}";
+            return (Start == End) ? $"{Start}" : $"{Start}～{End}";
         }
     }
 
