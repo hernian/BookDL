@@ -4,6 +4,7 @@ using BookDL.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
+using BookDL.Infrastructure.Parser;
 
 namespace BookDL.ViewModels
 {
@@ -54,11 +55,11 @@ namespace BookDL.ViewModels
         private DownloadReport downloadReport = new DownloadReport(0, 0, 0);
 
         private readonly ISettingsService _settingsService;
-        private readonly IApplicationService _applicationService;
+        private readonly IBookDownloadService _applicationService;
 
         public MainViewModel(
             ISettingsService settingsService,
-            IApplicationService applicationService
+            IBookDownloadService applicationService
             )
         {
             _settingsService = settingsService;

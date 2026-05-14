@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using BookDL.Infrastructure.Parser;
 
 namespace BookDL.Presentation
 {
@@ -47,9 +48,9 @@ namespace BookDL.Presentation
         private void SetDownloadReport(DownloadReport downloadReport)
         {
             Debug.WriteLine($"SetDownloadReport. downloadReport: {downloadReport}");
-            progressText.Text = $"{downloadReport.CurrentEpisode} / {downloadReport.TotalEpisode}";
-            var current = downloadReport.CurrentEpisode - downloadReport.StartEpisode;
-            var total = downloadReport.TotalEpisode - downloadReport.StartEpisode;
+            progressText.Text = $"{downloadReport.Current} / {downloadReport.Total}";
+            var current = downloadReport.Current - downloadReport.Start;
+            var total = downloadReport.Total - downloadReport.Start;
             progressBar.Value = total > 0 ? (double)current / (double)total : 0.0;
         }
     }
