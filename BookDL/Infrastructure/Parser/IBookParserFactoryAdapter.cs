@@ -1,11 +1,8 @@
 ﻿using AngleSharp.Html.Dom;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BookDL.Infrastructure.Parser
 {
-    public interface IBookParserDefinition
+    public interface IBookParserFactoryAdapter
     {
         string Name { get; }
         Task<IBookParser?> CreateParserAsync(IHtmlDocument doc, string bookUrl, CancellationToken ct);

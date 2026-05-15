@@ -28,19 +28,19 @@ namespace BookDL
             services.AddSingleton<EdgeService>();
             services.AddSingleton<IBrowserService>(sp => sp.GetRequiredService<EdgeService>());
             services.AddSingleton<IBrowserWindow>(sp => sp.GetRequiredService<EdgeService>());
-            services.AddSingleton<IBookParserDefinition, NarouBookParserDescriptor>();
+            services.AddSingleton<IBookParserFactoryAdapter, NarouBookParserFactoryAdapter>();
             services.AddSingleton<IBookParserFactory>(sp =>
             {
                 var browserService = sp.GetRequiredService<IBrowserService>();
                 var f =  new BookParserFactory(browserService);
-                f.AddAllParser(sp.GetServices<IBookParserDefinition>());
+                f.AddAllFactoryAdapters(sp.GetServices<IBookParserFactoryAdapter>());
                 return f;
             });
-            services.AddSingleton<IGeneratorDefinition, SingleHtmlGeneratorDefinition>();
+            services.AddSingleton<IGeneratorFactoryAdapter, SingleHtmlGeneratorFactoryAdapter>();
             services.AddSingleton<IGeneratorFactory, GeneratorFactory>(sp =>
             {
                 var f = new GeneratorFactory();
-                f.AddAllGenerator(sp.GetServices<IGeneratorDefinition>());
+                f.AddAllGeneratorAdapters(sp.GetServices<IGeneratorFactoryAdapter>());
                 return f;
             });
             services.AddSingleton<IBookDownloadService, BookDownloadService>();

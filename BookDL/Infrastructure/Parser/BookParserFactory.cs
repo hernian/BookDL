@@ -13,19 +13,19 @@ namespace BookDL.Infrastructure.Parser
         private static readonly TagLog<BookParserFactory> Log = new();
 
         private readonly IBrowserService _browserService;
-        private readonly List<IBookParserDefinition> _descriptorList = new();
+        private readonly List<IBookParserFactoryAdapter> _descriptorList = new();
 
         public BookParserFactory(IBrowserService browserService)
         {
             _browserService = browserService;
         }
 
-        public void AddParser(IBookParserDefinition parserDefinition)
+        public void AddParserFactoryAdapter(IBookParserFactoryAdapter parserDefinition)
         {
             _descriptorList.Add(parserDefinition);
         }
 
-        public void AddAllParser(IEnumerable<IBookParserDefinition> parserDefinitions)
+        public void AddAllFactoryAdapters(IEnumerable<IBookParserFactoryAdapter> parserDefinitions)
         {
             _descriptorList.AddRange(parserDefinitions);
         }

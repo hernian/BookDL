@@ -5,12 +5,12 @@ using BookDL.Domain;
 
 namespace BookDL.Infrastructure.Generator.SingleHtml
 {
-    public class SingleHtmlGeneratorDefinition : IGeneratorDefinition
+    public class SingleHtmlGeneratorFactoryAdapter : IGeneratorFactoryAdapter
     {
         public OutputDataKind Kind => OutputDataKind.SingleHtml;
 
         private readonly IResourceService _resourceService;
-        public SingleHtmlGeneratorDefinition(IResourceService resourceService)
+        public SingleHtmlGeneratorFactoryAdapter(IResourceService resourceService)
         {
             _resourceService = resourceService;
         }
