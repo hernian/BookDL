@@ -2,6 +2,7 @@
 using BookDL.Infrastructure;
 using BookDL.Infrastructure.Parser;
 using BookDL.Infrastructure.Generator;
+using System.IO;
 
 namespace BookDL.Services
 {
@@ -10,11 +11,11 @@ namespace BookDL.Services
         public string BookUrl { get; } = bookUrl;
     }
 
-    public interface IBookDownloadService : IDisposable
+    public interface IBookDownloadService
     {
-        Task InitializeAsync();
         Task<BookInfo> AnalyzeAsync(string bookUrl, CancellationToken ct);
         Task DownloadAsync(BookInfo bookInfo, string outputDirectory, IProgress<DownloadReport> progress, CancellationToken ct);
+        string ConstructOutputDirectory(BookInfo bookInfo);
     }
 
     public class BookDownloadService : IBookDownloadService
@@ -22,45 +23,24 @@ namespace BookDL.Services
         private static readonly TagLog<BookDownloadService> _log = new();
         private readonly ISettingsService _settingsService;
         private readonly IBookParserFactory _bookParserFactory;
-        private readonly Lazy<IBrowserService> _browserService;
         private readonly IGeneratorFactory _generatorFactory;
 
         public BookDownloadService(
             ISettingsService settingsService,
             IBookParserFactory bookParserFactory,
-            Lazy<IBrowserService> browserService,
             IGeneratorFactory generatorFactory
             )
         {
             _settingsService = settingsService;
             _bookParserFactory = bookParserFactory;
-            _browserService = browserService;
             _generatorFactory = generatorFactory;
-        }
-
-        public void Dispose()
-        {
-            if (_browserService.IsValueCreated)
-            {
-                // TODO: これは時間がかかる可能性があるので IAsyncDisposable化を検討せよ
-                _browserService.Value.Dispose();
-            }
-        }
-
-        public Task InitializeAsync()
-        {
-            return Task.Run(() =>
-            {
-                // Valueを参照することでブラウザサービスのコンストラクタが走る
-                _ = _browserService.Value;
-            });
         }
 
         public Task<BookInfo> AnalyzeAsync(string bookUrl, CancellationToken ct)
         {
             return Task.Run<BookInfo>(async () =>
             {
-                var bookParser = await _bookParserFactory.CreateBookParserAsync(_browserService.Value, bookUrl, ct);
+                var bookParser = await _bookParserFactory.CreateBookParserAsync(bookUrl, ct);
                 if (bookParser == null)
                 {
                     throw new NotSupportedSiteException(bookUrl);
@@ -73,7 +53,7 @@ namespace BookDL.Services
         {
             return Task.Run(async () =>
             {
-                var bookParser = await _bookParserFactory.CreateBookParserAsync(_browserService.Value, bookInfo.BookUrl, ct);
+                var bookParser = await _bookParserFactory.CreateBookParserAsync(bookInfo.BookUrl, ct);
                 if (bookParser == null)
                 {
                     throw new NotSupportedSiteException(bookInfo.BookUrl);
@@ -82,6 +62,17 @@ namespace BookDL.Services
                 var generator = _generatorFactory.CreateGenerator(_settingsService.OutputDataKind, book, outputDirectory);
                 await generator.GenerateOutputAsync(ct);
             }, ct);
+        }
+
+        public string ConstructOutputDirectory(BookInfo bookInfo)
+        {
+            var title = PathHelper.SanitizeForWindowsPathSegment(bookInfo.Title);
+            var author = PathHelper.SanitizeForWindowsPathSegment(bookInfo.Author);
+            var authorKatakana = PathHelper.SanitizeForWindowsPathSegment(bookInfo.AuthorKatakana);
+            var katakanaDir = authorKatakana.Length > 0 ? authorKatakana[0].ToString() : "不明";
+            var baseDir = _settingsService.OutputDirectory;
+            var outputDirectory = string.Join(Path.DirectorySeparatorChar, [baseDir, katakanaDir, author, title]);
+            return outputDirectory;
         }
     }
 }

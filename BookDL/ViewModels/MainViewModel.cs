@@ -5,9 +5,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
 using BookDL.Infrastructure.Parser;
+using BookDL.Presentation;
 
 namespace BookDL.ViewModels
 {
+    public class ConfigRequiredEventArgs : EventArgs
+    {
+        public ObservableObject ViewModel { get; init; }
+        public bool DialogResult { get; set; } = false;
+
+        public ConfigRequiredEventArgs(ObservableObject viewModel)
+        {
+            ViewModel = viewModel;
+        }
+    }
+
     public partial class MainViewModel : ObservableObject
     {
         public event EventHandler<ConfigRequiredEventArgs>? ConfigRequired;
@@ -23,7 +35,7 @@ namespace BookDL.ViewModels
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CreateOutputDirectoryPathCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SuggestOutputDirectoryPathCommand))]
         private string title = string.Empty;
 
         [ObservableProperty]
@@ -32,17 +44,17 @@ namespace BookDL.ViewModels
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CreateOutputDirectoryPathCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SuggestOutputDirectoryPathCommand))]
         private string author = string.Empty;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CreateOutputDirectoryPathCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SuggestOutputDirectoryPathCommand))]
         private string authorKatakana = string.Empty;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CreateOutputDirectoryPathCommand))]
+        [NotifyCanExecuteChangedFor(nameof(SuggestOutputDirectoryPathCommand))]
         [NotifyCanExecuteChangedFor(nameof(OpenOutputDirectoryCommand))]
         private string outputDirectory = string.Empty;
 
@@ -55,14 +67,17 @@ namespace BookDL.ViewModels
         private DownloadReport downloadReport = new DownloadReport(0, 0, 0);
 
         private readonly ISettingsService _settingsService;
+        private readonly IMessageService _messageService;
         private readonly IBookDownloadService _bookDownloadService;
 
         public MainViewModel(
             ISettingsService settingsService,
+            IMessageService messageService,
             IBookDownloadService bookDownloadService
             )
         {
             _settingsService = settingsService;
+            _messageService = messageService;
             _bookDownloadService = bookDownloadService;
             var currentState = _settingsService.CurrentState;
             this.BookUrl = currentState.BookInfo.BookUrl;
@@ -73,9 +88,12 @@ namespace BookDL.ViewModels
             this.OutputDirectory = currentState.OutputDirectory;
         }
 
-        public Task InitializeAsync()
+        public void Initialize()
         {
-            return _bookDownloadService.InitializeAsync();
+            if (string.IsNullOrWhiteSpace(_settingsService.OutputDirectory))
+            {
+                this.Config();
+            }
         }
 
         [RelayCommand(CanExecute = nameof(CanManipulate))]
@@ -123,18 +141,23 @@ namespace BookDL.ViewModels
             return !string.IsNullOrWhiteSpace(this.BookUrl);
         }
 
-        [RelayCommand(CanExecute = nameof(CanCreateOutputDirectoryPath))]
-        private void CreateOutputDirectoryPath()
+        [RelayCommand(CanExecute = nameof(CanSuggestOutputDirectoryPath))]
+        private void SuggestOutputDirectoryPath()
         {
             Debug.Write("CreateOutputDirectoryPath");
+            var bookInfo = GetBookInfo();
+            this.OutputDirectory = _bookDownloadService.ConstructOutputDirectory(bookInfo);
+            _messageService.Show(MessageType.Information, "出力ディレクトリへ推奨値を設定しました");
         }
 
-        private bool CanCreateOutputDirectoryPath()
+        private bool CanSuggestOutputDirectoryPath()
         {
-            return !string.IsNullOrWhiteSpace(this.Title)
+            var r = !string.IsNullOrWhiteSpace(this.Title)
                 && !string.IsNullOrWhiteSpace(this.Author)
                 && !string.IsNullOrWhiteSpace(this.AuthorKatakana)
-                && !string.IsNullOrWhiteSpace(this.OutputDirectory);
+                && !string.IsNullOrWhiteSpace(_settingsService.OutputDirectory);
+            Debug.WriteLine($"CanSuggestOutputDirectoryPath. r: {r}");
+            return r;
         }
 
         [RelayCommand]
@@ -218,8 +241,6 @@ namespace BookDL.ViewModels
             var bookInfo = GetBookInfo();
             _settingsService.CurrentState = new CurrentState(bookInfo, this.OutputDirectory);
             _settingsService.Save();
-
-            _bookDownloadService.Dispose();
         }
 
         private BookInfo GetBookInfo()

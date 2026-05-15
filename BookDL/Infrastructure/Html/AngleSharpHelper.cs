@@ -1,12 +1,9 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
-using AngleSharp.Html;
 using AngleSharp.Html.Dom;
 using BookDL.Domain;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
+using System.Text;
 
 namespace BookDL.Infrastructure.Html
 {

@@ -6,18 +6,25 @@ using System.Text;
 
 namespace BookDL.Infrastructure
 {
-    public static class WinApi
+    public interface IWinApi
+    {
+        void SetWindowOwner(IntPtr hWndTarget, IntPtr hWndOwner);
+        IntPtr FindWindowByTitleContains(string keyword);
+        Process GetWindowProcess(IntPtr hWnd);
+        void SetForeground(IntPtr hWnd);
+    }
+    public partial class WinApi : IWinApi
     {
         private const int GWLP_HWNDPARENT = -8;
         private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
-        public static void SetWindowOwner(IntPtr hWndTarget, IntPtr hWndOwner)
+        public void SetWindowOwner(IntPtr hWndTarget, IntPtr hWndOwner)
         {
             SetWindowLongPtr(hWndTarget, GWLP_HWNDPARENT, hWndOwner);
             SetWindowPos(hWndTarget, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         }
 
-        public static IntPtr FindWindowByTitleContains(string keyword)
+        public IntPtr FindWindowByTitleContains(string keyword)
         {
             IntPtr found = IntPtr.Zero;
             var sb = new System.Text.StringBuilder(256);
@@ -40,13 +47,17 @@ namespace BookDL.Infrastructure
             return found;
         }
 
-        public static Process GetWindowProcess(IntPtr hWnd)
+        public Process GetWindowProcess(IntPtr hWnd)
         {
             GetWindowThreadProcessId(hWnd, out uint pid);
             var process = Process.GetProcessById((int)pid);
             return process;
         }
 
+        public void SetForeground(IntPtr hWnd)
+        {
+            SetForegroundWindow(hWnd);
+        }
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
@@ -90,7 +101,8 @@ namespace BookDL.Infrastructure
         public const uint SWP_NOSENDCHANGING = 0x0400;
 
         [DllImport("user32.dll")]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        
     }
 }

@@ -14,55 +14,51 @@ namespace BookDL.Presentation
     {
         private static readonly TagLog<MainWindow> Log = new();
 
-        public Lazy<IBrowserWindow>? BrowserWindow { get; set; }
-
+        private readonly MainViewModel _mainViewModel;
+        private readonly IWinApi _winApi;
+        private readonly IBrowserWindow _browserWindow;
         private bool _initialized = false;
         private bool _closing = false;
 
-        public MainWindow()
+        public MainWindow(
+            MainViewModel viewModel,
+            IWinApi winApi,
+            IBrowserWindow browserWindow,
+            IOwnerWindowSetter ownerSetter)
         {
             InitializeComponent();
-            this.DataContextChanged += MainWindow_DataContextChanged;
+
+            this.DataContext = viewModel;
+            _mainViewModel = viewModel;
+            _mainViewModel.ConfigRequired += viewModel_ConfigRequired;
+
+            _winApi = winApi;
+            _browserWindow = browserWindow;
+            _browserWindow.BrowserClosed += BrowserWindow_BrowserClosed;
+            ownerSetter.SetOwner(this);
+
             this.ContentRendered += MainWindow_ContentRendered;
             this.Closing += MainWindow_Closing;
             this.IsEnabled = false;
+
         }
 
-        private void MainWindow_DataContextChanged(object? sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (e.OldValue is MainViewModel oldViewModel)
-            {
-                oldViewModel.ConfigRequired -= viewModel_ConfigRequired;
-            }
-            if (e.NewValue is MainViewModel newViewModel)
-            {
-                newViewModel.ConfigRequired += viewModel_ConfigRequired;
-            }
-        }
         private async void MainWindow_ContentRendered(object? sender, EventArgs e)
         {
             if (_initialized)
             {
                 return;
             }
-            Log.Debug($"MainWindow_ContentRendered. DataContext: {this.DataContext is MainViewModel}, BrowserWindow: {this.BrowserWindow != null}");
-            if (this.DataContext is MainViewModel vm)
-            {
-                if (this.BrowserWindow != null)
-                {
-                    _initialized = true;
-                    var wih= new WindowInteropHelper(this);
-                    var hWndSelf = wih.Handle;
-                    // this.BrowserWindow.Valueの初回参照は時間がかかるので非UIスレッドで実行する
-                    var hWndBrowser = await Task.Run<IntPtr>(() => this.BrowserWindow.Value.GetBrowserWindow());
-                    this.BrowserWindow.Value.BrowserClosed += BrowserWindow_BrowserClosed;
-                    Log.Debug($"MainWindow_ContentRendered. hWndSelf: 0x{hWndSelf:x8}, hWndBrowser: 0x{hWndBrowser:x8}");
-                    WinApi.SetWindowOwner(hWndSelf, hWndBrowser);
-                    WinApi.SetForegroundWindow(hWndSelf);
-                    await vm.InitializeAsync();
-                    this.IsEnabled = true;
-                }
-            }
+            Log.Debug($"MainWindow_ContentRendered.");
+            _initialized = true;
+            var wih= new WindowInteropHelper(this);
+            var hWndSelf = wih.Handle;
+            var hWndBrowser = _browserWindow.GetBrowserWindow();
+            Log.Debug($"MainWindow_ContentRendered. hWndSelf: 0x{hWndSelf:x8}, hWndBrowser: 0x{hWndBrowser:x8}");
+            _winApi.SetWindowOwner(hWndSelf, hWndBrowser);
+            _winApi.SetForeground(hWndSelf);
+            _mainViewModel.Initialize();
+            this.IsEnabled = true;
         }
 
         private void BrowserWindow_BrowserClosed(object? sender, EventArgs e)

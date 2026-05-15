@@ -7,6 +7,7 @@ using BookDL.Infrastructure.Parser.Narou;
 using BookDL.Presentation;
 using BookDL.Services;
 using BookDL.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.IO;
 using System.Windows;
@@ -18,6 +19,44 @@ namespace BookDL
     /// </summary>
     public partial class App : Application
     {
+        private static ServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<IWinApi, WinApi>();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IResourceService, ResourceService>();
+            services.AddSingleton<EdgeService>();
+            services.AddSingleton<IBrowserService>(sp => sp.GetRequiredService<EdgeService>());
+            services.AddSingleton<IBrowserWindow>(sp => sp.GetRequiredService<EdgeService>());
+            services.AddSingleton<IBookParserDefinition, NarouBookParserDescriptor>();
+            services.AddSingleton<IBookParserFactory>(sp =>
+            {
+                var browserService = sp.GetRequiredService<IBrowserService>();
+                var f =  new BookParserFactory(browserService);
+                f.AddAllParser(sp.GetServices<IBookParserDefinition>());
+                return f;
+            });
+            services.AddSingleton<IGeneratorDefinition, SingleHtmlGeneratorDefinition>();
+            services.AddSingleton<IGeneratorFactory, GeneratorFactory>(sp =>
+            {
+                var f = new GeneratorFactory();
+                f.AddAllGenerator(sp.GetServices<IGeneratorDefinition>());
+                return f;
+            });
+            services.AddSingleton<IBookDownloadService, BookDownloadService>();
+            services.AddSingleton<OwnerWindowProvider>();
+            services.AddSingleton<IOwnerWindowProvider>(sp => sp.GetRequiredService<OwnerWindowProvider>());
+            services.AddSingleton<IOwnerWindowSetter>(sp => sp.GetRequiredService<OwnerWindowProvider>());
+            services.AddSingleton<ToastService>();
+            services.AddSingleton<IMessageService>(sp => sp.GetRequiredService<ToastService>());
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<ConfigViewModel>();
+            services.AddSingleton<MainWindow>();
+            return services.BuildServiceProvider();
+        }
+
+        private ServiceProvider _services = ConfigureServices();
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             var localAppPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -33,31 +72,14 @@ namespace BookDL
                 .CreateLogger();
             Log.Information("BooDL started.");
 
-            var settingsService = new SettingsService();
-            var resourceService = new ResourceService();
-            var bookParserFactory = new BookParserFactory();
-            bookParserFactory.AddParser("なろう", NarouBookParser.CreateAsync);
-            var lazyEdgeService = new Lazy<EdgeService>(() => new EdgeService());
-            var lazyBrowserService = new Lazy<IBrowserService>(() => lazyEdgeService.Value);
-            var lazyBrowserWindow = new Lazy<IBrowserWindow>(() => lazyEdgeService.Value);
-            var generatorFactory = new GeneratorFactory();
-            CreateGeneratorDelegate createGenerator = (Book book, string outputDirectory) => new SingleHtmlGenerator(book, outputDirectory, resourceService);
-            // var createGenerator = (Book book, string outputDirectory) => (IGenerator)new SingleHtmlGenerator(book, outputDirectory, resourceService);
-            generatorFactory.AddGenerator(OutputDataKind.SingleHtml, createGenerator);
-            var bookDownloadService = new BookDownloadService(
-                settingsService,
-                bookParserFactory,
-                lazyBrowserService,
-                generatorFactory);
-            var mainViewModel = new MainViewModel(settingsService, bookDownloadService);
-            var mainWindow = new MainWindow()
-            {
-                DataContext = mainViewModel,
-                BrowserWindow = lazyBrowserWindow
-            };
+            var mainWindow = _services.GetRequiredService<MainWindow>();
             this.MainWindow = mainWindow;
             mainWindow.Show();
         }
-    }
 
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            _services?.Dispose();
+        }
+    }
 }

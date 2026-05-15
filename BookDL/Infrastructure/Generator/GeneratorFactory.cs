@@ -10,16 +10,23 @@ namespace BookDL.Infrastructure.Generator
 
     public class GeneratorFactory : IGeneratorFactory
     {
-        private readonly Dictionary<OutputDataKind, CreateGeneratorDelegate> _dict = new();
-        public void AddGenerator(OutputDataKind kind, CreateGeneratorDelegate create)
+        private readonly Dictionary<OutputDataKind, IGeneratorDefinition> _dict = new();
+        public void AddGenerator(IGeneratorDefinition genDef)
         {
-            _dict.Add(kind, create);
+            _dict.Add(genDef.Kind, genDef);
+        }
+        public void AddAllGenerator(IEnumerable<IGeneratorDefinition> genDefs)
+        {
+            foreach (var genDef in genDefs)
+            {
+                _dict.Add(genDef.Kind, genDef);
+            }
         }
 
         public IGenerator CreateGenerator(OutputDataKind kind, Book book, string outputDirectory)
         {
-            var cerate = _dict[kind];
-            return cerate(book, outputDirectory);
+            var cerator = _dict[kind];
+            return cerator.Create(book, outputDirectory);
         }
     }
 }

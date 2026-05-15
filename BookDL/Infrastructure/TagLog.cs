@@ -11,7 +11,7 @@ namespace BookDL.Infrastructure
         private readonly string _tag;
         public TagLog()
         {
-            _tag = nameof(T);
+            _tag = $"[{typeof(T).Name}]";
         }
 
         public void Debug(string msg)

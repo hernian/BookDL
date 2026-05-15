@@ -7,7 +7,7 @@ using System.Text;
 
 namespace BookDL.Infrastructure
 {
-    public interface IBrowserService : IDisposable
+    public interface IBrowserService
     {
         void SetBrowserForeground();
         void Navigate(string url);
@@ -23,7 +23,7 @@ namespace BookDL.Infrastructure
         IntPtr GetBrowserWindow();
     }
 
-    public class EdgeService : IBrowserService, IBrowserWindow
+    public class EdgeService : IBrowserService, IBrowserWindow, IDisposable
     {
         private static readonly TagLog<EdgeService> Log = new();
 
@@ -32,33 +32,18 @@ namespace BookDL.Infrastructure
         private const int GET_BROWSER_WINDOW_RETRY_COUNT = 50;
         private const int GET_BROWSER_WINDOW_RETRY_INTERVAL = 100; // ms
 
-        private static IntPtr FindBrowserWindow(EdgeDriver driver, out string uuidTitle)
-        {
-            uuidTitle = $"BookDL-{Guid.NewGuid()}";
-            driver.ExecuteScript($"document.title = '{uuidTitle}'");
-            Thread.Sleep(1000);
-            var hWnd = IntPtr.Zero;
-            for (var i = 0; i < GET_BROWSER_WINDOW_RETRY_COUNT; ++i)
-            {
-                hWnd = WinApi.FindWindowByTitleContains(uuidTitle);
-                if (hWnd != IntPtr.Zero)
-                {
-                    break;
-                }
-                Thread.Sleep(GET_BROWSER_WINDOW_RETRY_INTERVAL);
-            }
-            return hWnd;
-        }
-
         public event EventHandler? BrowserClosed;
 
+        private readonly IWinApi _winApi;
         private EdgeDriver _driver;
         private IntPtr _hWnd;
         private Process _process;
         private bool _disposed;
 
-        public EdgeService()
+        public EdgeService(IWinApi winApi)
         {
+            _winApi = winApi;
+
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
             var options = new EdgeOptions();
@@ -78,7 +63,7 @@ namespace BookDL.Infrastructure
                 Log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
-            _process = WinApi.GetWindowProcess(_hWnd);
+            _process = _winApi.GetWindowProcess(_hWnd);
             if (_process == null)
             {
                 var msg = $"Missing browser process. hWnd: 0x{_hWnd:x8}";
@@ -107,6 +92,7 @@ namespace BookDL.Infrastructure
 
         public void Dispose()
         {
+            Log.Debug("Dispose called.");
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
@@ -118,7 +104,7 @@ namespace BookDL.Infrastructure
 
         public void SetBrowserForeground()
         {
-            WinApi.SetForegroundWindow(_hWnd);
+            _winApi.SetForeground(_hWnd);
         }
 
         public void Navigate(string url)
@@ -153,6 +139,24 @@ namespace BookDL.Infrastructure
         {
             var html = CallJavaScript(SCRIPT_GET_DOM);
             return html;
+        }
+
+        private IntPtr FindBrowserWindow(EdgeDriver driver, out string uuidTitle)
+        {
+            uuidTitle = $"BookDL-{Guid.NewGuid()}";
+            driver.ExecuteScript($"document.title = '{uuidTitle}'");
+            Thread.Sleep(1000);
+            var hWnd = IntPtr.Zero;
+            for (var i = 0; i < GET_BROWSER_WINDOW_RETRY_COUNT; ++i)
+            {
+                hWnd = _winApi.FindWindowByTitleContains(uuidTitle);
+                if (hWnd != IntPtr.Zero)
+                {
+                    break;
+                }
+                Thread.Sleep(GET_BROWSER_WINDOW_RETRY_INTERVAL);
+            }
+            return hWnd;
         }
 
         private void process_Exited(object? sender, EventArgs e)

@@ -47,7 +47,7 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
         private void GenerateBookPart(IHtmlDocument doc, GBookPart bookPart)
         {
             var book = bookPart.Source;
-            var baseName = PathHelper.SanitizeForWindowsFileNameSegment(book.Info.Title);
+            var baseName = PathHelper.SanitizeForWindowsPathSegment(book.Info.Title);
             var fileName = $"{baseName}({bookPart.EpisodeRange}).html";
             var outputPath = Path.Combine(_outputDirectory, fileName);
 

@@ -1,39 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
+﻿using AngleSharp.Html.Dom;
 using BookDL.Infrastructure.Html;
 
 namespace BookDL.Infrastructure.Parser
 {
     public interface IBookParserFactory
     {
-        Task<IBookParser?> CreateBookParserAsync(IBrowserService browserService, string bookUrl, CancellationToken ct);
+        Task<IBookParser?> CreateBookParserAsync(string bookUrl, CancellationToken ct);
     }
 
     public class BookParserFactory : IBookParserFactory
     {
         private static readonly TagLog<BookParserFactory> Log = new();
 
-        private readonly List<(string Name, CreateBookParserAsyncDelegate Creator)> _creatorList = new();
-        public void AddParser(string name, CreateBookParserAsyncDelegate creator)
+        private readonly IBrowserService _browserService;
+        private readonly List<IBookParserDefinition> _descriptorList = new();
+
+        public BookParserFactory(IBrowserService browserService)
         {
-            _creatorList.Add((name, creator));
+            _browserService = browserService;
         }
 
-        public async Task<IBookParser?> CreateBookParserAsync(IBrowserService browserService, string bookUrl, CancellationToken ct)
+        public void AddParser(IBookParserDefinition parserDefinition)
         {
-            browserService.Navigate(bookUrl);
-            var html = browserService.GetDom();
-            var currentUrl = browserService.GetCurrentUrl();
+            _descriptorList.Add(parserDefinition);
+        }
+
+        public void AddAllParser(IEnumerable<IBookParserDefinition> parserDefinitions)
+        {
+            _descriptorList.AddRange(parserDefinitions);
+        }
+
+        public async Task<IBookParser?> CreateBookParserAsync(string bookUrl, CancellationToken ct)
+        {
+            _browserService.Navigate(bookUrl);
+            var html = _browserService.GetDom();
+            var currentUrl = _browserService.GetCurrentUrl();
             var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
-            foreach (var (name, createAsync) in _creatorList)
+            foreach (var parserDesc in _descriptorList)
             {
                 ct.ThrowIfCancellationRequested();
                 try
                 {
-                    var bookParser = await createAsync(browserService, doc, bookUrl, ct);
+                    var bookParser = await parserDesc.CreateParserAsync(doc, bookUrl, ct);
                     if (bookParser != null)
                     {
                         return bookParser;
@@ -41,7 +49,7 @@ namespace BookDL.Infrastructure.Parser
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, $"Exception occered in CreateBookParser. Name: {name}");
+                    Log.Error(ex, $"Exception occered in CreateBookParser. Name: {parserDesc.Name}");
                 }
             }
             return null;

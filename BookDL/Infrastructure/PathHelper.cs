@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace BookDL.Infrastructure.Generator
+namespace BookDL.Infrastructure
 {
     public static class PathHelper
     {
@@ -33,7 +33,7 @@ namespace BookDL.Infrastructure.Generator
             // …で省略する可能性があるのでファイル名の部分から拡張子を取り除く
             var basename = Path.GetFileNameWithoutExtension(filename);
             var ext = Path.GetExtension(filename);
-            var sanitizedFileName = SanitizeForWindowsFileNameSegment(basename) + ext;
+            var sanitizedFileName = SanitizeForWindowsPathSegment(basename) + ext;
             return sanitizedFileName;
         }
 
@@ -52,7 +52,7 @@ namespace BookDL.Infrastructure.Generator
             var listSegment = new List<string>();
             foreach (var segment in segments)
             {
-                var sanitizedSegment = SanitizeForWindowsFileNameSegment(segment);
+                var sanitizedSegment = SanitizeForWindowsPathSegment(segment);
                 listSegment.Add(sanitizedSegment);
             }
             var sanitizedPath = string.Join(Path.DirectorySeparatorChar, listSegment) + ext;
@@ -63,20 +63,20 @@ namespace BookDL.Infrastructure.Generator
             return sanitizedPath;
         }
 
-        public static string SanitizeForWindowsFileNameSegment(string input)
+        public static string SanitizeForWindowsPathSegment(string segment)
         {
-            if (string.IsNullOrEmpty(input)) return input ?? string.Empty;
+            if (string.IsNullOrEmpty(segment)) return segment ?? string.Empty;
 
-            var sb = new StringBuilder(input.Length);
+            var sb = new StringBuilder(segment.Length);
 
-            for (int i = 0; i < input.Length; i++)
+            for (int i = 0; i < segment.Length; i++)
             {
-                char c = input[i];
+                char c = segment[i];
 
                 // ① サロゲートペアの処理（Shift_JIS は BMP のみ対応）
                 if (char.IsHighSurrogate(c))
                 {
-                    if (i + 1 < input.Length && char.IsLowSurrogate(input[i + 1]))
+                    if (i + 1 < segment.Length && char.IsLowSurrogate(segment[i + 1]))
                         i++; // ローサロゲートもスキップ
                              // ペア・孤立ともに除外
                     continue;

@@ -64,7 +64,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Grid.Row="0" Grid.Column="1" Content="推奨値" Command="{Binding CreateOutputDirectoryPathCommand}" />
+                <Button Grid.Row="0" Grid.Column="1" Content="推奨値" Command="{Binding SuggestOutputDirectoryPathCommand}" />
                 <Button Grid.Row="0" Grid.Column="2" Content="参照..." Command="{Binding BrowseOutputDirectoryCommand}" />
             </Grid>
             <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
