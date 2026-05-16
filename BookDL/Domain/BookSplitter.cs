@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using BookDL.Infrastructure;
 
 namespace BookDL.Domain
 {
     public class BookSplitter
     {
+        private readonly TagLog<BookSplitter> Log = new();
         private readonly IGBookNodeFactory _factory;
         private readonly int _splitSize;
         public BookSplitter(IGBookNodeFactory factory, int splitSize)
@@ -16,6 +15,7 @@ namespace BookDL.Domain
 
         public GBook SplitBook(Book srcBook)
         {
+            Log.Debug($"SlitBook. Title: {srcBook.Info.Title}, Author: {srcBook.Info.Author}");
             var outputBookPartList = new List<GBookPart>();
             var outputBookPartSize = 0;
             var outputBookPartIndex = 0;
@@ -34,6 +34,7 @@ namespace BookDL.Domain
                         var chapterEpisodeRange = new EpisodeRange(
                             outputEpisodeList[0].Source.Index,
                             outputEpisodeList[^1].Source.Index);
+                        Log.Debug($"GChapter Title: {srcChapter.Title}, Range: {chapterEpisodeRange}, Size: {outputChapterSize}");
                         var outputChapter = _factory.CreateGChapter(
                             srcChapter,
                             outputChapterIndex,
@@ -48,6 +49,7 @@ namespace BookDL.Domain
                         var bookPartEpisodeRange = new EpisodeRange(
                             outputChapterList[0].Source.EpisodeRange.Start,
                             outputChapterList[^1].Source.EpisodeRange.End);
+                        Log.Debug($"GBookPart Range: {bookPartEpisodeRange}, Size: {outputBookPartSize}");
                         var outputBookPart = _factory.CreateGBookPart(
                             srcBook,
                             outputBookPartIndex,
@@ -67,6 +69,7 @@ namespace BookDL.Domain
                     var chapterEpisodeRange = new EpisodeRange(
                         outputEpisodeList[0].Source.Index,
                         outputEpisodeList[^1].Source.Index);
+                    Log.Debug($"GChapter Title: {srcChapter.Title}, Range: {chapterEpisodeRange}, Size: {outputChapterSize}");
                     var outputChapter = _factory.CreateGChapter(
                         srcChapter,
                         outputChapterIndex,
@@ -83,6 +86,7 @@ namespace BookDL.Domain
                     outputChapterList[0].EpisodeRange.Start,
                     outputChapterList[^1].EpisodeRange.End
                     );
+                Log.Debug($"GBookPart Range: {bookPartEpisodeRange}, Size: {outputBookPartSize}");
                 var outputBookPart = _factory.CreateGBookPart(
                     srcBook,
                     outputBookPartIndex,

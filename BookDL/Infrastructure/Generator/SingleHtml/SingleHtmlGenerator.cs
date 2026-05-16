@@ -94,7 +94,7 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
             section.AppendElementWithText("h1", "目次");
             foreach (var chapter in bookPart.Chapters)
             {
-                var hasTitle = string.IsNullOrEmpty(chapter.Source.Title);
+                var hasTitle = !string.IsNullOrEmpty(chapter.Source.Title);
                 if (bookPart.Chapters.Count > 1 || hasTitle)
                 {
                     var h2 = section.AppendElement("h2");

@@ -1,8 +1,12 @@
 ﻿using BookDL.Domain;
 using BookDL.Infrastructure;
-using BookDL.Infrastructure.Parser;
 using BookDL.Infrastructure.Generator;
+using BookDL.Infrastructure.Parser;
 using System.IO;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BookDL.Services
 {
@@ -24,6 +28,7 @@ namespace BookDL.Services
         private readonly ISettingsService _settingsService;
         private readonly IBookParserFactory _bookParserFactory;
         private readonly IGeneratorFactory _generatorFactory;
+        private IBookParser? _bookParser;
 
         public BookDownloadService(
             ISettingsService settingsService,
@@ -40,12 +45,14 @@ namespace BookDL.Services
         {
             return Task.Run<BookInfo>(async () =>
             {
-                var bookParser = await _bookParserFactory.CreateBookParserAsync(bookUrl, ct);
-                if (bookParser == null)
+                _bookParser = await _bookParserFactory.CreateBookParserAsync(bookUrl, ct);
+                if (_bookParser == null)
                 {
                     throw new NotSupportedSiteException(bookUrl);
                 }
-                return await bookParser.GetBookInfoAsync(ct);
+                await _bookParser.InitializeAsync(ct);
+                // InitialyzeAsyncの後はBookInfoに値が設定される
+                return _bookParser.BookInfo!;
             }, ct);
         }
 
@@ -53,12 +60,29 @@ namespace BookDL.Services
         {
             return Task.Run(async () =>
             {
+                if (_bookParser?.BookInfo?.BookUrl != bookInfo.BookUrl)
+                {
+                    _bookParser = await _bookParserFactory.CreateBookParserAsync(bookInfo.BookUrl, ct);
+                    if (_bookParser == null)
+                    {
+                        throw new NotSupportedSiteException(bookInfo.BookUrl);
+                    }
+                }
                 var bookParser = await _bookParserFactory.CreateBookParserAsync(bookInfo.BookUrl, ct);
                 if (bookParser == null)
                 {
                     throw new NotSupportedSiteException(bookInfo.BookUrl);
                 }
                 var book = await bookParser.DownloadBookAsync(bookInfo, progress, ct);
+
+                var options = new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    WriteIndented = true,
+                };
+                var text = System.Text.Json.JsonSerializer.Serialize<Book>(book, options);
+                File.WriteAllText(@"d:\temp\BookDL\book.json", text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
                 var generator = _generatorFactory.CreateGenerator(_settingsService.OutputDataKind, book, outputDirectory);
                 await generator.GenerateOutputAsync(ct);
             }, ct);

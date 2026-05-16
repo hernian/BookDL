@@ -144,6 +144,11 @@ namespace BookDL.Presentation
             {
                 case DropKind.Url when first is not null:
                     bookUrl.Text = first;
+                    title.Text = string.Empty;
+                    titleKatakana.Text = string.Empty;
+                    author.Text = string.Empty;
+                    authorKatakana.Text = string.Empty;
+                    outputDirectory.SelectedPath = string.Empty;
                     break;
 
                 case DropKind.Directory when first is not null:

@@ -48,13 +48,13 @@
                     <Button Content="解析" Grid.Column="2" Command="{Binding AnalyzeCommand}" />
                 </Grid>
                 <TextBlock Grid.Row="1" Grid.Column="0">タイトル</TextBlock>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="title"  Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Grid.Row="2" Grid.Column="0"> タイトル(カタカナ)</TextBlock>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TitleKatakana, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="titleKatakana"  Text="{Binding TitleKatakana, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Grid.Row="3" Grid.Column="0">著者</TextBlock>
-                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" x:Name="author" Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Grid.Row="4" Grid.Column="0">著者(カタカナ)</TextBlock>
-                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorKatakana, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="authorKatakana" Text="{Binding AuthorKatakana, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="出力ディレクトリ" Grid.Row="5" Grid.Column="0"/>
                 <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*,Auto">
                     <ctrl:FolderPicker x:Name="outputDirectory" SelectedPath="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"/>

@@ -1,6 +1,8 @@
-﻿using System;
+﻿using AngleSharp.Dom;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace BookDL.Domain
 {
@@ -11,7 +13,11 @@ namespace BookDL.Domain
             return (Start == End) ? $"{Start}" : $"{Start}～{End}";
         }
     }
-
+    [JsonPolymorphic]
+    [JsonDerivedType(typeof(TextNode), typeDiscriminator: nameof(TextNode))]
+    [JsonDerivedType(typeof(BreakRowNode), typeDiscriminator: nameof(BreakRowNode))]
+    [JsonDerivedType(typeof(TateChuYokoNode), typeDiscriminator: nameof(TateChuYokoNode))]
+    [JsonDerivedType(typeof(RubyNode), typeDiscriminator: nameof(RubyNode))]
     public interface IBookNode
     {
     }

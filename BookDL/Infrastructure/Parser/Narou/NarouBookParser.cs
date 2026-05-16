@@ -112,6 +112,7 @@ namespace BookDL.Infrastructure.Parser.Narou
 
         /******************************************************************************************************/
         // ここからインスタンスメンバー
+        public BookInfo? BookInfo => _bookInfo;
         private readonly IBrowserService _browserService;
         private readonly BookInfo _bookInfo;
         private readonly string _firstEpisodeUrl;
@@ -123,9 +124,9 @@ namespace BookDL.Infrastructure.Parser.Narou
             _firstEpisodeUrl = firstEposodeUrl;
         }
 
-        public Task<BookInfo> GetBookInfoAsync(CancellationToken ct)
+        public Task InitializeAsync(CancellationToken ct)
         {
-            return Task<BookInfo>.FromResult(_bookInfo);
+            return Task.CompletedTask;
         }
 
         public async Task<Book> DownloadBookAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct)
@@ -149,7 +150,7 @@ namespace BookDL.Infrastructure.Parser.Narou
                 var html = _browserService.GetDom();
                 var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
                 var episodeInfo = ParseEpisode(doc);
-                if (!string.IsNullOrWhiteSpace(episodeInfo.ChapterTitle))
+                if (episodeInfo.ChapterTitle != chapterTitle && !string.IsNullOrWhiteSpace(episodeInfo.ChapterTitle))
                 {
                     if (episodeList.Count > 0)
                     {
