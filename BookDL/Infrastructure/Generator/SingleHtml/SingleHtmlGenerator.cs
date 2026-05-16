@@ -53,6 +53,12 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
 
             var titleElem = doc.QuerySelector("title") ?? throw new InvalidOperationException("Missing title element.");
             titleElem.TextContent = $"{book.Info.Title}({bookPart.EpisodeRange})";
+            titleElem
+                .AddAfterSelf(doc.CreateMeta([("name", "og:title"), ("content", book.Info.Title)]))
+                .AddAfterSelf(doc.CreateMeta([("name", "og:url"), ("content", book.Info.BookUrl)]))
+                .AddAfterSelf(doc.CreateMeta([("name", "creator"), ("content", book.Info.Author)]))
+                .AddAfterSelf(doc.CreateMeta([("name", "title-katakana"), ("content", book.Info.TitleKatakana)]))
+                .AddAfterSelf(doc.CreateMeta([("name", "creator-katakana"), ("content", book.Info.AuthorKatakana)]));
 
             var body = doc.QuerySelector("body") as IHtmlElement ?? throw new InvalidOperationException("Missing body element.");
             GenerateCover(body, bookPart);

@@ -43,6 +43,24 @@ namespace BookDL.Infrastructure.Html
             doc.ToHtml(writer, FORMATTER);
         }
 
+        public static T AddAfterSelf<T>(this IElement element, T newNode) where T : INode
+        {
+            var parent = element.Parent ?? throw new InvalidOperationException("Missing parent.");
+            var next = element.NextSibling;
+            parent.InsertBefore(newNode, next);
+            return newNode;
+        }
+
+        public static IElement CreateMeta(this IDocument doc, (string Name, string Content)[] attrs)
+        {
+            var metaElem = doc.CreateElement("meta");
+            foreach (var item in attrs)
+            {
+                metaElem.SetAttribute(item.Name, item.Content);
+            }
+            return metaElem;
+        }
+
         // 以下の拡張メソッド群は、必ず親を指定してDOMを操作する。
         // 複数のDocumentが混じる環境にて、必ず親を指定することで、親のオーナーから要素を生成することを保証する。
 

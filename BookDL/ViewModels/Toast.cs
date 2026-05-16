@@ -1,10 +1,6 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using BookDL.Infrastructure;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Windows;
-using BookDL.Infrastructure;
-using System.Windows.Interop;
 
 namespace BookDL.Presentation
 {

@@ -98,21 +98,17 @@ namespace BookDL.Presentation
         {
             var dialog = CreateDialog(e.ViewModel);
             dialog.Owner = this;
-            var res = dialog.ShowDialog();
-            e.DialogResult = res.HasValue ? res.Value : false;
+            e.DialogResult = dialog.ShowDialog();
         }
 
         private Window CreateDialog(object viewModel)
         {
-            if (viewModel is ConfigViewModel configViewModel)
+            return viewModel switch
             {
-                return new ConfigDialog(configViewModel);
-            }
-            if (viewModel is AboutViewModel aboutViewModel)
-            {
-                return new AboutDialog(aboutViewModel);
-            }
-            throw new InvalidOperationException($"Unknown viewModel. viewModel: {viewModel}");
+                ConfigViewModel vm => new ConfigDialog(vm),
+                AboutViewModel vm => new AboutDialog(vm),
+                _ => throw new NotSupportedException($"Unknown ViewModel: {viewModel.GetType()}")
+            };
         }
 
     }

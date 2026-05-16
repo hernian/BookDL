@@ -1,25 +1,13 @@
 ﻿using BookDL.Domain;
 using BookDL.Infrastructure;
+using BookDL.Infrastructure.Parser;
 using BookDL.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
-using BookDL.Infrastructure.Parser;
-using BookDL.Presentation;
 
 namespace BookDL.ViewModels
 {
-    public class ConfigRequiredEventArgs : EventArgs
-    {
-        public ObservableObject ViewModel { get; init; }
-        public bool DialogResult { get; set; } = false;
-
-        public ConfigRequiredEventArgs(ObservableObject viewModel)
-        {
-            ViewModel = viewModel;
-        }
-    }
-
     public partial class MainViewModel : ObservableObject
     {
         public event EventHandler<ConfigRequiredEventArgs>? ConfigRequired;
@@ -219,7 +207,7 @@ namespace BookDL.ViewModels
             var configViewModel = new ConfigViewModel(_settingsService);
             var eventArgs = new ConfigRequiredEventArgs(configViewModel);
             this.ConfigRequired?.Invoke(this, eventArgs);
-            if (eventArgs.DialogResult)
+            if (eventArgs.DialogResult == true)
             {
                 this.SuggestOutputDirectoryPathCommand.NotifyCanExecuteChanged();
             }
