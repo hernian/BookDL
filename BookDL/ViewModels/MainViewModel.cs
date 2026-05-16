@@ -67,17 +67,14 @@ namespace BookDL.ViewModels
         private DownloadReport downloadReport = new DownloadReport(0, 0, 0);
 
         private readonly ISettingsService _settingsService;
-        private readonly IMessageService _messageService;
         private readonly IBookDownloadService _bookDownloadService;
 
         public MainViewModel(
             ISettingsService settingsService,
-            IMessageService messageService,
             IBookDownloadService bookDownloadService
             )
         {
             _settingsService = settingsService;
-            _messageService = messageService;
             _bookDownloadService = bookDownloadService;
             var currentState = _settingsService.CurrentState;
             this.BookUrl = currentState.BookInfo.BookUrl;
@@ -147,7 +144,7 @@ namespace BookDL.ViewModels
             Debug.Write("CreateOutputDirectoryPath");
             var bookInfo = GetBookInfo();
             this.OutputDirectory = _bookDownloadService.ConstructOutputDirectory(bookInfo);
-            _messageService.Show(MessageType.Information, "出力ディレクトリへ推奨値を設定しました");
+            ToastMessage.SendInformation("出力ディレクトリへ推奨値を設定しました");
         }
 
         private bool CanSuggestOutputDirectoryPath()
@@ -224,7 +221,7 @@ namespace BookDL.ViewModels
             this.ConfigRequired?.Invoke(this, eventArgs);
             if (eventArgs.DialogResult)
             {
-                // ToDo: 設定変更されたときの処理
+                this.SuggestOutputDirectoryPathCommand.NotifyCanExecuteChanged();
             }
         }
 

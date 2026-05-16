@@ -47,8 +47,6 @@ namespace BookDL
             services.AddSingleton<OwnerWindowProvider>();
             services.AddSingleton<IOwnerWindowProvider>(sp => sp.GetRequiredService<OwnerWindowProvider>());
             services.AddSingleton<IOwnerWindowSetter>(sp => sp.GetRequiredService<OwnerWindowProvider>());
-            services.AddSingleton<ToastService>();
-            services.AddSingleton<IMessageService>(sp => sp.GetRequiredService<ToastService>());
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<ConfigViewModel>();
             services.AddSingleton<MainWindow>();

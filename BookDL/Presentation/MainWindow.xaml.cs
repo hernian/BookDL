@@ -17,6 +17,7 @@ namespace BookDL.Presentation
         private readonly MainViewModel _mainViewModel;
         private readonly IWinApi _winApi;
         private readonly IBrowserWindow _browserWindow;
+        private readonly Toast _toast;
         private bool _initialized = false;
         private bool _closing = false;
 
@@ -36,6 +37,8 @@ namespace BookDL.Presentation
             _browserWindow = browserWindow;
             _browserWindow.BrowserClosed += BrowserWindow_BrowserClosed;
             ownerSetter.SetOwner(this);
+
+            _toast = new Toast(this);
 
             this.ContentRendered += MainWindow_ContentRendered;
             this.Closing += MainWindow_Closing;
@@ -87,10 +90,8 @@ namespace BookDL.Presentation
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
             _closing = true;
-            if (this.DataContext is MainViewModel vm)
-            {
-                vm.Cleanup();
-            }
+            _mainViewModel?.Cleanup();
+            _toast?.Dispose();
         }
 
         private void viewModel_ConfigRequired(object? sender, ConfigRequiredEventArgs e)

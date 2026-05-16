@@ -1,4 +1,5 @@
 ﻿using BookDL.Infrastructure;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -8,7 +9,7 @@ namespace BookDL.Presentation
     /// <summary>
     /// Toast.xaml の相互作用ロジック
     /// </summary>
-    public partial class Toast : Window
+    public partial class ToastWindow : Window
     {
         private static class ResourceKeys
         {
@@ -21,25 +22,27 @@ namespace BookDL.Presentation
         }
 
         private readonly DispatcherTimer _timer;
-        public Toast(MessageType type, string message)
+
+        public ToastWindow(ToastMessage toast)
         {
             InitializeComponent();
 
-            var bgKey = type == MessageType.Error ? ResourceKeys.ErrorBackground : ResourceKeys.InfoBackground;
-            var fgKey = type == MessageType.Error ? ResourceKeys.ErrorForeground : ResourceKeys.InfoForeground;
-            ToastBorder.Background = (Brush)FindResource(bgKey);
-            MessageText.Foreground = (Brush)FindResource(fgKey);
-            CloseButton.Foreground = (Brush)FindResource(fgKey);
+            var bgKey = toast.Type == ToastType.Error ? ResourceKeys.ErrorBackground : ResourceKeys.InfoBackground;
+            var fgKey = toast.Type == ToastType.Error ? ResourceKeys.ErrorForeground : ResourceKeys.InfoForeground;
+            toastBorder.Background = (Brush)FindResource(bgKey);
+            messageText.Foreground = (Brush)FindResource(fgKey);
+            closeButton.Foreground = (Brush)FindResource(fgKey);
 
-            MessageText.Text = message;
+            messageText.Text = toast.Text;
 
-            var durationKey = type == MessageType.Error ? ResourceKeys.ErrorDuration : ResourceKeys.InfoDuration;
+            var durationKey = toast.Type == ToastType.Error ? ResourceKeys.ErrorDuration : ResourceKeys.InfoDuration;
             var duration = (TimeSpan)FindResource(durationKey);
 
-            CloseButton.Click += (_, __) => CloseToast();
+            closeButton.Click += (_, __) => CloseToast();
             _timer = new DispatcherTimer { Interval = duration };
             _timer.Tick += (_, __) => CloseToast();
-            _timer.Start();
+
+            this.Loaded += (_, __) => _timer.Start();
         }
 
         private void CloseToast()

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:BookDL.Presentation"
+             xmlns:ctrl="clr-namespace:BookDL.Presentation.Controls"
              mc:Ignorable="d">
     <DockPanel Width="800" Height="Auto">
         <Menu DockPanel.Dock="Top">
@@ -32,15 +33,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0">本のURL</TextBlock>
-            <Grid Grid.Row="0" Grid.Column="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto,Auto">
                 <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding BookUrl, UpdateSourceTrigger=PropertyChanged}"/>
                 <Button Content="操作" Grid.Row="0" Grid.Column="1" Command="{Binding ManipulateCommand}" />
                 <Button Content="解析" Grid.Row="0" Grid.Column="2" Command="{Binding AnalyzeCommand}" />
@@ -54,28 +47,11 @@
             <TextBlock Grid.Row="4" Grid.Column="0">著者(カタカナ)</TextBlock>
             <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorKatakana, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBlock Text="出力ディレクトリ" Grid.Row="5" Grid.Column="0"/>
-            <Grid Grid.Row="5" Grid.Column="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"/>
+            <Grid Grid.Row="5" Grid.Column="1" ColumnDefinitions="*,Auto">
+                <ctrl:FolderPicker Grid.Row="0" Grid.Column="0" SelectedPath="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}"/>
                 <Button Grid.Row="0" Grid.Column="1" Content="推奨値" Command="{Binding SuggestOutputDirectoryPathCommand}" />
-                <Button Grid.Row="0" Grid.Column="2" Content="参照..." Command="{Binding BrowseOutputDirectoryCommand}" />
             </Grid>
-            <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,Auto">
                 <Button Grid.Row="0" Grid.Column="1" Content="Download" HorizontalAlignment="Left" Command="{Binding DownloadCommand}" />
                 <Button Grid.Row="0" Grid.Column="2" Content="出力ディレクトリを開く" HorizontalAlignment="Left" Command="{Binding OpenOutputDirectoryCommand}" />
             </Grid>

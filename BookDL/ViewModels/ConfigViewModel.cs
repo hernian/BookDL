@@ -4,6 +4,7 @@ using BookDL.Presentation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Windows.Markup;
 
 namespace BookDL.ViewModels
 {
@@ -24,6 +25,7 @@ namespace BookDL.ViewModels
         public event EventHandler<DialogResultEventArgs>? CloseDialogRequired;
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(OKCommand))]
         private string outputDirectory;
 
         [ObservableProperty]
@@ -41,13 +43,18 @@ namespace BookDL.ViewModels
             SelectedItem = this.items.FirstOrDefault(i => i.Kind == _settingsService.OutputDataKind);
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanOK))]
         private void OK()
         {
             _settingsService.OutputDataKind = SelectedItem?.Kind ?? throw new InvalidOperationException("No outputDataKind selected.");
             _settingsService.OutputDirectory = this.OutputDirectory;
             _settingsService.Save();
             this.CloseDialogRequired?.Invoke(this, new DialogResultEventArgs(dialogResult: true));
+        }
+
+        private bool CanOK()
+        {
+            return !string.IsNullOrWhiteSpace(this.OutputDirectory);
         }
 
         [RelayCommand]
