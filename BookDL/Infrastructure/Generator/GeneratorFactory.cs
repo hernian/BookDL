@@ -11,10 +11,15 @@ namespace BookDL.Infrastructure.Generator
     public class GeneratorFactory : IGeneratorFactory
     {
         private readonly Dictionary<OutputDataKind, IGeneratorFactoryAdapter> _dict = new();
+        public GeneratorFactory()
+        {
+        }
+
         public void AddGeneratorAdapter(IGeneratorFactoryAdapter genDef)
         {
             _dict.Add(genDef.Kind, genDef);
         }
+
         public void AddAllGeneratorAdapters(IEnumerable<IGeneratorFactoryAdapter> genDefs)
         {
             foreach (var genDef in genDefs)

@@ -4,20 +4,31 @@ using BookDL.Domain;
 using BookDL.Infrastructure.Html;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Windows.Media.Animation;
 
 namespace BookDL.Infrastructure.Generator.SingleHtml
 {
     public class SingleHtmlGenerator : IGenerator
     {
-        private const int SPLIT_SIZE = 1024 * 1024; // 1MB
+        private const int SPLIT_SIZE = 2 * 1024 * 1024; // 2MB
+        private static readonly TagLog<SingleHtmlGenerator> LOG = new();
+
         private readonly Book _book;
         private readonly string _outputDirectory;
         private readonly IResourceService _resourceService;
-        public SingleHtmlGenerator(Book book, string outputDirectory, IResourceService resourceService)
+        private readonly ITextWriterFactory _storageService;
+        public SingleHtmlGenerator(
+            Book book,
+            string outputDirectory,
+            IResourceService resourceService,
+            ITextWriterFactory storageService)
         {
+            LOG.Debug($"ctor. book.Title: {book.Info.Title}, outputDirectory: {outputDirectory}");
             _book = book;
             _outputDirectory = outputDirectory;
             _resourceService = resourceService;
+            _storageService = storageService;
         }
 
         public async Task GenerateOutputAsync(CancellationToken ct)
@@ -32,6 +43,7 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
             foreach (var bookPart in gBook.OutputBookParts)
             {
                 ct.ThrowIfCancellationRequested();
+                // bookPart毎に異なるDOMツリーを構築するためコピーを作る
                 var doc = (IHtmlDocument)docTemplate.Clone(deep: true);
                 GenerateBookPart(doc, bookPart);
             }
@@ -46,6 +58,7 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
 
         private void GenerateBookPart(IHtmlDocument doc, GBookPart bookPart)
         {
+            LOG.Debug($"GenerateBookPart. EpisodeRange: {bookPart.EpisodeRange}, Size: {bookPart.Size}");
             var book = bookPart.Source;
             var baseName = PathHelper.SanitizeForWindowsPathSegment(book.Info.Title);
             var fileName = $"{baseName}({bookPart.EpisodeRange}).html";
@@ -53,9 +66,11 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
 
             var titleElem = doc.QuerySelector("title") ?? throw new InvalidOperationException("Missing title element.");
             titleElem.TextContent = $"{book.Info.Title}({bookPart.EpisodeRange})";
+            // Kindle Paperwhiteで著者名とは認識されないけど、
+            // 著者名と、カタカナのタイトル・著者名もheadに追加しておく。
             titleElem
-                .AddAfterSelf(doc.CreateMeta([("name", "og:title"), ("content", book.Info.Title)]))
-                .AddAfterSelf(doc.CreateMeta([("name", "og:url"), ("content", book.Info.BookUrl)]))
+                .AddAfterSelf(doc.CreateMeta([("property", "og:title"), ("content", book.Info.Title)]))
+                .AddAfterSelf(doc.CreateMeta([("property", "og:url"), ("content", book.Info.BookUrl)]))
                 .AddAfterSelf(doc.CreateMeta([("name", "creator"), ("content", book.Info.Author)]))
                 .AddAfterSelf(doc.CreateMeta([("name", "title-katakana"), ("content", book.Info.TitleKatakana)]))
                 .AddAfterSelf(doc.CreateMeta([("name", "creator-katakana"), ("content", book.Info.AuthorKatakana)]));
@@ -71,7 +86,8 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
                 }
             }
 
-            doc.Save(outputPath);
+            using var writer = _storageService.OpenTextStream(outputPath);
+            doc.Save(writer);
         }
 
         private void GenerateCover(IElement body, GBookPart bookPart)

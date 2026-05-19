@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using BookDL.Domain;
+﻿using BookDL.Domain;
 
 namespace BookDL.Infrastructure.Generator.SingleHtml
 {
@@ -10,13 +7,15 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
         public OutputDataKind Kind => OutputDataKind.SingleHtml;
 
         private readonly IResourceService _resourceService;
-        public SingleHtmlGeneratorFactoryAdapter(IResourceService resourceService)
+        private readonly ITextWriterFactory _storageService;
+        public SingleHtmlGeneratorFactoryAdapter(IResourceService resourceService, ITextWriterFactory storateService)
         {
             _resourceService = resourceService;
+            _storageService = storateService;
         }
         public IGenerator Create(Book book, string outputDirectory)
         {
-            return new SingleHtmlGenerator(book, outputDirectory, _resourceService);
+            return new SingleHtmlGenerator(book, outputDirectory, _resourceService, _storageService);
         }
     }
 }

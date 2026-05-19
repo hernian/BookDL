@@ -37,9 +37,8 @@ namespace BookDL.Infrastructure.Html
             return ms.ToArray();
         }
 
-        public static void Save(this IDocument doc, string path)
+        public static void Save(this IDocument doc, TextWriter writer)
         {
-            using var writer = new StreamWriter(path, false, UTF8_WO_BOM);
             doc.ToHtml(writer, FORMATTER);
         }
 

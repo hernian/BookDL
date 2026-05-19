@@ -25,6 +25,7 @@ namespace BookDL
             services.AddSingleton<IWinApi, WinApi>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<IResourceService, ResourceService>();
+            services.AddSingleton<ITextWriterFactory, TextWriterFactory>();
             services.AddSingleton<EdgeService>();
             services.AddSingleton<IBrowserService>(sp => sp.GetRequiredService<EdgeService>());
             services.AddSingleton<IBrowserWindow>(sp => sp.GetRequiredService<EdgeService>());
