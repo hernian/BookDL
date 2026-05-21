@@ -11,6 +11,15 @@ namespace BookDL.Test;
 [TestClass]
 public class SingleHtmlGeneratorTests
 {
+    private readonly string _outputDirectory;
+
+    public SingleHtmlGeneratorTests()
+    {
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        _outputDirectory = Path.Combine(baseDir, "html");
+        Directory.CreateDirectory(_outputDirectory);
+    }
+
     [TestMethod]
     public async Task Test_GenerateNantonaku()
     {
@@ -34,7 +43,7 @@ public class SingleHtmlGeneratorTests
         gen.GenerateOutputAsync(cts.Token).GetAwaiter().GetResult();
         Assert.IsTrue(capturedPath?.StartsWith(@"D:\temp\BookDL\test\"));
         var result = sw.ToString();
-        var outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "nantonaku.html");
+        var outputPath = Path.Combine(_outputDirectory, "nantonaku.html");
         File.WriteAllText(outputPath, result);
     }
     [TestMethod]
@@ -60,7 +69,7 @@ public class SingleHtmlGeneratorTests
         gen.GenerateOutputAsync(cts.Token).GetAwaiter().GetResult();
         Assert.IsTrue(capturedPath?.StartsWith(@"D:\temp\BookDL\test\"));
         var result = sw.ToString();
-        var outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "anataganozonda.html");
+        var outputPath = Path.Combine(_outputDirectory, "anataganozonda.html");
         File.WriteAllText(outputPath, result);
     }
     [TestMethod]
@@ -86,7 +95,7 @@ public class SingleHtmlGeneratorTests
         gen.GenerateOutputAsync(cts.Token).GetAwaiter().GetResult();
         Assert.IsTrue(capturedPath?.StartsWith(@"D:\temp\BookDL\test\"));
         var result = sw.ToString();
-        var outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dekiaifuyou.html");
+        var outputPath = Path.Combine(_outputDirectory, "dekiaifuyou.html");
         File.WriteAllText(outputPath, result);
     }
     [TestMethod]
@@ -112,7 +121,7 @@ public class SingleHtmlGeneratorTests
         gen.GenerateOutputAsync(cts.Token).GetAwaiter().GetResult();
         Assert.IsTrue(capturedPath?.StartsWith(@"D:\temp\BookDL\test\"));
         var result = sw.ToString();
-        var outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "reikokuotto.html");
+        var outputPath = Path.Combine(_outputDirectory, "reikokuotto.html");
         File.WriteAllText(outputPath, result);
     }
     [TestMethod]
@@ -138,7 +147,7 @@ public class SingleHtmlGeneratorTests
         gen.GenerateOutputAsync(cts.Token).GetAwaiter().GetResult();
         Assert.IsTrue(capturedPath?.StartsWith(@"D:\temp\BookDL\test\"));
         var result = sw.ToString();
-        var outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tennseiakuyakuyoujyo.html");
+        var outputPath = Path.Combine(_outputDirectory, "tennseiakuyakuyoujyo.html");
         File.WriteAllText(outputPath, result);
     }
 }

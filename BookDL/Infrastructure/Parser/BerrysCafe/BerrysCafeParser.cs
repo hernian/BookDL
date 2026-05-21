@@ -35,6 +35,76 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
             string NextPageLink,
             IReadOnlyList<ParagraphNode> Paragraphs);
 
+        private class PageContext
+        {
+            private readonly List<ParagraphNode> _paragraphList = new();
+            private List<IBookNode> _nodeList = new();
+            private readonly StringBuilder _sb = new();
+            private int _breakRowCount = 0;
+
+            public void FlsuhBreakRow()
+            {
+                if (_nodeList.Count > 0)
+                {
+                    if (_breakRowCount >= 2)
+                    {
+                        _paragraphList.Add(new ParagraphNode(_nodeList));
+                        _nodeList = new();
+                    }
+                    else if (_breakRowCount == 1)
+                    {
+                        _nodeList.Add(new BreakRowNode());
+                    }
+                    _breakRowCount = 0;
+                }
+            }
+
+            public void FlushText()
+            {
+                if (_sb.Length > 0)
+                {
+                    _nodeList.Add(new TextNode(_sb.ToString()));
+                    _sb.Clear();
+                }
+            }
+
+            public IReadOnlyList<ParagraphNode> Flush()
+            {
+                this.FlushText();
+                // BreakRowのフラッシュは不要
+                // この次の処理でパラグラフを確定するし、パラグラフの最後の要素として<br>を入れたくない。
+                // this.FlsuhBreakRow();
+                if (_nodeList.Count > 0)
+                {
+                    _paragraphList.Add(new ParagraphNode(_nodeList));
+                }
+                return _paragraphList;
+            }
+
+            public void AddText(string text)
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return;
+                }
+                this.FlsuhBreakRow();
+                _sb.Append(text);
+            }
+
+            public void AddBreakRow()
+            {
+                this.FlushText();
+                _breakRowCount++;
+            }
+
+            public void AddNode(IBookNode node)
+            {
+                this.FlushText();
+                this.FlsuhBreakRow();
+                _nodeList.Add(node);
+            }
+        }
+
         private static readonly Regex PAGE_NUMBER_PATTERN = new Regex(@"<\s*(\d+)\s*/\s*(\d+)\s*>");
 
         public static IBookParser? CreateParser(IHtmlDocument doc, string bookUrl, IBrowserService browseService)
@@ -210,76 +280,6 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
                 return false;
             }
             return currentPage.ChapterTitle != string.Empty;
-        }
-
-        private class PageContext
-        {
-            private readonly List<ParagraphNode> _paragraphList = new();
-            private List<IBookNode> _nodeList = new();
-            private readonly StringBuilder _sb = new();
-            private int _breakRowCount = 0;
-
-            public void FlsuhBreakRow()
-            {
-                if (_nodeList.Count > 0)
-                {
-                    if (_breakRowCount >= 2)
-                    {
-                        _paragraphList.Add(new ParagraphNode(_nodeList));
-                        _nodeList = new();
-                    }
-                    else if (_breakRowCount == 1)
-                    {
-                        _nodeList.Add(new BreakRowNode());
-                    }
-                    _breakRowCount = 0;
-                }
-            }
-
-            public void FlushText()
-            {
-                if (_sb.Length > 0)
-                {
-                    _nodeList.Add(new TextNode(_sb.ToString()));
-                    _sb.Clear();
-                }
-            }
-
-            public IReadOnlyList<ParagraphNode> Flush()
-            {
-                this.FlushText();
-                // BreakRowのフラッシュは不要
-                // この次の処理でパラグラフを確定するし、パラグラフの最後の要素として<br>を入れたくない。
-                // this.FlsuhBreakRow();
-                if (_nodeList.Count > 0)
-                {
-                    _paragraphList.Add(new ParagraphNode(_nodeList));
-                }
-                return _paragraphList;
-            }
-
-            public void AddText(string text)
-            {
-                if (string.IsNullOrWhiteSpace(text))
-                {
-                    return;
-                }
-                this.FlsuhBreakRow();
-                _sb.Append(text);
-            }
-
-            public void AddBreakRow()
-            {
-                this.FlushText();
-                _breakRowCount++;
-            }
-
-            public void AddNode(IBookNode node)
-            {
-                this.FlushText();
-                this.FlsuhBreakRow();
-                _nodeList.Add(node);
-            }
         }
 
 
