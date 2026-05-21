@@ -9,21 +9,43 @@ using Moq;
 
 namespace BookDL.Test;
 
+/// <summary>
+/// Berry's Cafeではチャプタータイトル・エピソードタイトルの使い方に大きく2つある。
+/// ・チャプタータイトルだけ使う
+/// ・エピソードタイトルだけ使う
+/// 稀に混在している場合もある。
+/// BrrysCafe2テストではチャプタータイトルのみのデータを扱う
+/// </summary>
 [TestClass]
+
 public class BerrysCafeParserTests2
 {
-    private IBrowserService _browserService;
+    private IBrowserService _browserService = null!;
     public BerrysCafeParserTests2()
     {
-        var urlList = new List<string>();
-        urlList.Add("https://www.berrys-cafe.jp/book/n1615134");
-        for (int i = 1; i <= 35; i++)
-        {
-            urlList.Add($"https://www.berrys-cafe.jp/book/n1615134/{i}");
-        }
         var htmlLoader = new HtmlLoader("BookDL.Test.TestHtml.BerrysCafe2");
-        htmlLoader.LoadHtmlMap(urlList);
+        htmlLoader.LoadByManifest("manifest.json");
         _browserService = new FakeBrowserService(htmlLoader.HtmlMap);
+    }
+    [TestMethod]
+    public async Task Test_FactoryAdapter()
+    {
+        var adapter = new BerrysCafeParserFactoryAdapter(_browserService);
+        var bookUrl = "https://www.berrys-cafe.jp/book/n1615134";
+        _browserService.Navigate(bookUrl);
+        var currentUrl = _browserService.GetCurrentUrl();
+        var html = _browserService.GetDom();
+        var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
+        var cts = new CancellationTokenSource();
+        var parser = await adapter.CreateParserAsync(doc, bookUrl, cts.Token);
+        Assert.IsNotNull(parser);
+        var bookInfo1 = parser.BookInfo;
+        Assert.IsNotNull(bookInfo1);
+        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1615134", bookInfo1.BookUrl);
+        Assert.AreEqual("転生悪役幼女は最恐パパの愛娘になりました", bookInfo1.Title);
+        Assert.AreEqual(string.Empty, bookInfo1.TitleKatakana);
+        Assert.AreEqual("桃城 猫緒", bookInfo1.Author);
+        Assert.AreEqual(string.Empty, bookInfo1.AuthorKatakana);
     }
 
     [TestMethod]
@@ -50,7 +72,7 @@ public class BerrysCafeParserTests2
         Assert.AreEqual(string.Empty, bookInfo1.AuthorKatakana);
 
         var bookInfo2 = new BookInfo(
-            BookUrl: "https://www.berrys-cafe.jp/book/n1774811",
+            BookUrl: "https://www.berrys-cafe.jp/book/n1615134",
             Title: "転生悪役幼女",
             TitleKatakana: "テンセイアクヤクヨウジョ",
             Author: "桃城 猫緒",
@@ -59,17 +81,16 @@ public class BerrysCafeParserTests2
         progressMock.Setup(x => x.Report(It.IsAny<DownloadReport>()));
         var book = await parser.DownloadBookAsync(bookInfo2, progressMock.Object, cts.Token);
         Assert.AreEqual(bookInfo2, book.Info);
-        Assert.HasCount(1, book.Chapters);
-        Assert.AreEqual(string.Empty, book.Chapters[0].Title);
-        Assert.AreEqual(1, book.Chapters[0].EpisodeRange.Start);
-        Assert.AreEqual(35, book.Chapters[0].EpisodeRange.End);
-        Assert.HasCount(3, book.Chapters[0].Episodes);
-        Assert.AreEqual("プロローグ", book.Chapters[0].Episodes[0].Title);
-        Assert.AreEqual(1, book.Chapters[0].Episodes[0].Index);
-        Assert.AreEqual("Chapter.1", book.Chapters[0].Episodes[1].Title);
-        Assert.AreEqual(2, book.Chapters[0].Episodes[1].Index);
-        Assert.AreEqual("Chapter.2", book.Chapters[0].Episodes[2].Title);
-        Assert.AreEqual(34, book.Chapters[0].Episodes[2].Index);
+        Assert.HasCount(9, book.Chapters);
+        string[] chapterTitles = [
+            "プロローグ", "Chapter.1", "Chapter.2", "Chapter.3", "Chapter.4", "Chapter.5", "Chapter.6", "Chapter.7", "エピローグ"
+            ];
+        for (var i = 0; i < book.Chapters.Count; i++)
+        {
+            Assert.AreEqual(chapterTitles[i], book.Chapters[i].Title);
+            Assert.HasCount(1, book.Chapters[i].Episodes);
+            Assert.AreEqual(string.Empty, book.Chapters[i].Episodes[0].Title);
+        }
     }
 
     [TestMethod]
@@ -105,16 +126,15 @@ public class BerrysCafeParserTests2
         progressMock.Setup(x => x.Report(It.IsAny<DownloadReport>()));
         var book = await parser.DownloadBookAsync(bookInfo2, progressMock.Object, cts.Token);
         Assert.AreEqual(bookInfo2, book.Info);
-        Assert.HasCount(1, book.Chapters);
-        Assert.AreEqual(string.Empty, book.Chapters[0].Title);
-        Assert.AreEqual(1, book.Chapters[0].EpisodeRange.Start);
-        Assert.AreEqual(35, book.Chapters[0].EpisodeRange.End);
-        Assert.HasCount(3, book.Chapters[0].Episodes);
-        Assert.AreEqual("プロローグ", book.Chapters[0].Episodes[0].Title);
-        Assert.AreEqual(1, book.Chapters[0].Episodes[0].Index);
-        Assert.AreEqual("Chapter.1", book.Chapters[0].Episodes[1].Title);
-        Assert.AreEqual(2, book.Chapters[0].Episodes[1].Index);
-        Assert.AreEqual("Chapter.2", book.Chapters[0].Episodes[2].Title);
-        Assert.AreEqual(34, book.Chapters[0].Episodes[2].Index);
+        Assert.HasCount(9, book.Chapters);
+        string[] chapterTitles = [
+            "プロローグ", "Chapter.1", "Chapter.2", "Chapter.3", "Chapter.4", "Chapter.5", "Chapter.6", "Chapter.7", "エピローグ"
+            ];
+        for (var i = 0; i < book.Chapters.Count; i++)
+        {
+            Assert.AreEqual(chapterTitles[i], book.Chapters[i].Title);
+            Assert.HasCount(1, book.Chapters[i].Episodes);
+            Assert.AreEqual(string.Empty, book.Chapters[i].Episodes[0].Title);
+        }
     }
 }

@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 *.html
+manifest.json
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)

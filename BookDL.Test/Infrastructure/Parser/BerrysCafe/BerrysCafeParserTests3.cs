@@ -3,11 +3,9 @@ using BookDL.Infrastructure;
 using BookDL.Infrastructure.Html;
 using BookDL.Infrastructure.Parser;
 using BookDL.Infrastructure.Parser.BerrysCafe;
-using BookDL.Infrastructure.Parser.Narou;
 using BookDL.Test.FakeServices;
 using BookDL.Test.TestUtilities;
 using Moq;
-using System.Reflection;
 
 namespace BookDL.Test;
 
@@ -16,24 +14,24 @@ namespace BookDL.Test;
 /// ・チャプタータイトルだけ使う
 /// ・エピソードタイトルだけ使う
 /// 稀に混在している場合もある。
-/// BrrysCafe1テストではエピソードタイトルのみのデータを扱う
+/// BrrysCafe3テストではエピソードタイトルのみのデータを扱う
 /// </summary>
 [TestClass]
-public class BerrysCafeParserTests1
+public class BerrysCafeParserTests3
 {
-    private IBrowserService _browserService;
-    public BerrysCafeParserTests1()
+    private IBrowserService _browserService = null!;
+    public BerrysCafeParserTests3()
     {
-        var loader = new HtmlLoader("BookDL.Test.TestHtml.BerrysCafe1");
-        loader.LoadByManifest("manifest.json");
-        _browserService = new FakeBrowserService(loader.HtmlMap);
+        var htmlLoader = new HtmlLoader("BookDL.Test.TestHtml.BerrysCafe3");
+        htmlLoader.LoadByManifest("manifest.json");
+        _browserService = new FakeBrowserService(htmlLoader.HtmlMap);
     }
 
     [TestMethod]
     public async Task Test_FactoryAdapter()
     {
         var adapter = new BerrysCafeParserFactoryAdapter(_browserService);
-        var bookUrl = "https://www.berrys-cafe.jp/book/n1774811";
+        var bookUrl = "https://www.berrys-cafe.jp/book/n1738376";
         _browserService.Navigate(bookUrl);
         var currentUrl = _browserService.GetCurrentUrl();
         var html = _browserService.GetDom();
@@ -43,17 +41,17 @@ public class BerrysCafeParserTests1
         Assert.IsNotNull(parser);
         var bookInfo1 = parser.BookInfo;
         Assert.IsNotNull(bookInfo1);
-        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1774811", bookInfo1.BookUrl);
-        Assert.AreEqual("契約婚だから溺愛は不要です〜余命一年で捨てられた私はホテル王に求婚される〜", bookInfo1.Title);
+        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1738376", bookInfo1.BookUrl);
+        Assert.AreEqual("【書籍化】あなたが望んだ妻は、もういません～浮気者の旦那様と離婚して楽しい第二の人生を始めます～", bookInfo1.Title);
         Assert.AreEqual(string.Empty, bookInfo1.TitleKatakana);
-        Assert.AreEqual("専業プウタ", bookInfo1.Author);
+        Assert.AreEqual("風見ゆうみ", bookInfo1.Author);
         Assert.AreEqual(string.Empty, bookInfo1.AuthorKatakana);
     }
 
     [TestMethod]
-    public async Task Test_TitlePage()
+    public async Task Test_ParseTitlePage()
     {
-        var bookUrl = "https://www.berrys-cafe.jp/book/n1774811";
+        var bookUrl = "https://www.berrys-cafe.jp/book/n1738376";
         _browserService.Navigate(bookUrl);
         var currentUrl = _browserService.GetCurrentUrl();
         var html = _browserService.GetDom();
@@ -67,35 +65,34 @@ public class BerrysCafeParserTests1
         Assert.IsNotNull(parser);
         var bookInfo1 = parser.BookInfo;
         Assert.IsNotNull(bookInfo1);
-        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1774811", bookInfo1.BookUrl);
-        Assert.AreEqual("契約婚だから溺愛は不要です〜余命一年で捨てられた私はホテル王に求婚される〜", bookInfo1.Title);
+        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1738376", bookInfo1.BookUrl);
+        Assert.AreEqual("【書籍化】あなたが望んだ妻は、もういません～浮気者の旦那様と離婚して楽しい第二の人生を始めます～", bookInfo1.Title);
         Assert.AreEqual(string.Empty, bookInfo1.TitleKatakana);
-        Assert.AreEqual("専業プウタ", bookInfo1.Author);
+        Assert.AreEqual("風見ゆうみ", bookInfo1.Author);
         Assert.AreEqual(string.Empty, bookInfo1.AuthorKatakana);
 
         var bookInfo2 = new BookInfo(
-            BookUrl: "https://www.berrys-cafe.jp/book/n1774811",
-            Title: "契約婚だから溺愛は不要です",
-            TitleKatakana: "コンヤクシャダカラデキアイハフヨウデス",
-            Author: "専業プウタ",
-            AuthorKatakana: "センギョウプウタ");
+            BookUrl: "https://www.berrys-cafe.jp/book/n1738376",
+            Title: "あなたが望んだ妻は、もういません",
+            TitleKatakana: "アナタガノゾンダツマハ、モウイマセン",
+            Author: "風見ゆうみ",
+            AuthorKatakana: "カザミユウミ");
         var progressMock = new Mock<IProgress<DownloadReport>>();
         progressMock.Setup(x => x.Report(It.IsAny<DownloadReport>()));
         var book = await parser.DownloadBookAsync(bookInfo2, progressMock.Object, cts.Token);
         Assert.AreEqual(bookInfo2, book.Info);
         Assert.HasCount(1, book.Chapters);
-        Assert.AreEqual(1, book.Chapters[0].EpisodeRange.Start);
-        Assert.AreEqual(424, book.Chapters[0].EpisodeRange.End);
         Assert.AreEqual(string.Empty, book.Chapters[0].Title);
-        Assert.HasCount(38, book.Chapters[0].Episodes);
-        Assert.AreEqual("1.１年後に死ぬ君が必要なんだ。", book.Chapters[0].Episodes[0].Title);
-        Assert.AreEqual("38.これからもっと幸せにする。日陰、愛してる。", book.Chapters[0].Episodes[37].Title);
+        Assert.HasCount(34, book.Chapters[0].Episodes);
+        Assert.AreEqual("プロローグ", book.Chapters[0].Episodes[0].Title);
+        Assert.AreEqual(1, book.Chapters[0].Episodes[0].Index);
+        Assert.AreEqual("３３　　私の人生は私のものです　⑦", book.Chapters[0].Episodes[33].Title);
+        Assert.AreEqual(37, book.Chapters[0].Episodes[33].Index);
     }
-
     [TestMethod]
-    public async Task Test_EpisodePage()
+    public async Task Test_ParseEpisodePage()
     {
-        var bookUrl = "https://www.berrys-cafe.jp/book/n1774811/1";
+        var bookUrl = "https://www.berrys-cafe.jp/book/n1738376/1";
         _browserService.Navigate(bookUrl);
         var currentUrl = _browserService.GetCurrentUrl();
         var html = _browserService.GetDom();
@@ -109,28 +106,28 @@ public class BerrysCafeParserTests1
         Assert.IsNotNull(parser);
         var bookInfo1 = parser.BookInfo;
         Assert.IsNotNull(bookInfo1);
-        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1774811/1", bookInfo1.BookUrl);
-        Assert.AreEqual("契約婚だから溺愛は不要です〜余命一年で捨てられた私はホテル王に求婚される〜", bookInfo1.Title);
+        Assert.AreEqual("https://www.berrys-cafe.jp/book/n1738376/1", bookInfo1.BookUrl);
+        Assert.AreEqual("【書籍化】あなたが望んだ妻は、もういません～浮気者の旦那様と離婚して楽しい第二の人生を始めます～", bookInfo1.Title);
         Assert.AreEqual(string.Empty, bookInfo1.TitleKatakana);
-        Assert.AreEqual("専業プウタ", bookInfo1.Author);
+        Assert.AreEqual("風見ゆうみ", bookInfo1.Author);
         Assert.AreEqual(string.Empty, bookInfo1.AuthorKatakana);
 
         var bookInfo2 = new BookInfo(
-            BookUrl: "https://www.berrys-cafe.jp/book/n1774811/1",
-            Title: "契約婚だから溺愛は不要です",
-            TitleKatakana: "コンヤクシャダカラデキアイハフヨウデス",
-            Author: "専業プウタ",
-            AuthorKatakana: "センギョウプウタ");
+            BookUrl: "https://www.berrys-cafe.jp/book/n1738376/1",
+            Title: "あなたが望んだ妻は、もういません",
+            TitleKatakana: "アナタガノゾンダツマハ、モウイマセン",
+            Author: "風見ゆうみ",
+            AuthorKatakana: "カザミユウミ");
         var progressMock = new Mock<IProgress<DownloadReport>>();
         progressMock.Setup(x => x.Report(It.IsAny<DownloadReport>()));
         var book = await parser.DownloadBookAsync(bookInfo2, progressMock.Object, cts.Token);
         Assert.AreEqual(bookInfo2, book.Info);
         Assert.HasCount(1, book.Chapters);
-        Assert.AreEqual(1, book.Chapters[0].EpisodeRange.Start);
-        Assert.AreEqual(424, book.Chapters[0].EpisodeRange.End);
         Assert.AreEqual(string.Empty, book.Chapters[0].Title);
-        Assert.HasCount(38, book.Chapters[0].Episodes);
-        Assert.AreEqual("1.１年後に死ぬ君が必要なんだ。", book.Chapters[0].Episodes[0].Title);
-        Assert.AreEqual("38.これからもっと幸せにする。日陰、愛してる。", book.Chapters[0].Episodes[37].Title);
+        Assert.HasCount(34, book.Chapters[0].Episodes);
+        Assert.AreEqual("プロローグ", book.Chapters[0].Episodes[0].Title);
+        Assert.AreEqual(1, book.Chapters[0].Episodes[0].Index);
+        Assert.AreEqual("３３　　私の人生は私のものです　⑦", book.Chapters[0].Episodes[33].Title);
+        Assert.AreEqual(37, book.Chapters[0].Episodes[33].Index);
     }
 }

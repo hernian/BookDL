@@ -129,7 +129,6 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
         {
             var visitedUrls = new HashSet<string>();
             var chapterList = new List<Chapter>();
-            var chapterTitle = string.Empty;
             var episodeList = new List<Episode>();
             var paragraphList = new List<ParagraphNode>();
             var firstChapterPage = default(Page);
@@ -149,21 +148,17 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
                 var doc = await AngleSharpHelper.ParseDocumentAsync(html, currentUrl);
                 var page = ParsePage(doc);
                 Debug.WriteLine($"page. Title: {page.EpisodeTitle}, PageNumber: {page.PageNumber}, NextPageLink: {page.NextPageLink}");
-                if (firstEpisodePage != null
-                    && lastPage != null
-                    && (page.EpisodeTitle != string.Empty)
-                    && (firstEpisodePage.EpisodeTitle != page.EpisodeTitle))
+                var isEpisodeChanged = IsEpisodeChanged(firstEpisodePage, page);
+                var isChapterChanged = IsChapterChanged(firstChapterPage, page);
+                if (lastPage != null && (isEpisodeChanged || isChapterChanged))
                 {
-                    var episode = new Episode(firstEpisodePage.EpisodeTitle, firstEpisodePage.PageNumber, paragraphList);
+                    var episode = new Episode(firstEpisodePage!.EpisodeTitle, firstEpisodePage.PageNumber, paragraphList);
                     episodeList.Add(episode);
                     paragraphList = new List<ParagraphNode>();
                     firstEpisodePage = null;
-                    if (firstChapterPage != null
-                        && lastPage != null
-                        && page.ChapterTitle != string.Empty
-                        && firstChapterPage.ChapterTitle != page.ChapterTitle)
+                    if (isChapterChanged)
                     {
-                        var range = new EpisodeRange(firstChapterPage.PageNumber, lastPage.PageNumber);
+                        var range = new EpisodeRange(firstChapterPage!.PageNumber, lastPage.PageNumber);
                         var chapter = new Chapter(firstChapterPage.ChapterTitle, range, episodeList);
                         chapterList.Add(chapter);
                         episodeList = new List<Episode>();
@@ -193,21 +188,39 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
                 && firstChapterPage != null)
             {
                 var range = new EpisodeRange(firstChapterPage.PageNumber, lastPage.PageNumber);
-                var chapter = new Chapter(chapterTitle, range, episodeList);
+                var chapter = new Chapter(firstChapterPage.ChapterTitle, range, episodeList);
                 chapterList.Add(chapter);
             }
             return new Book(bookInfo, chapterList);
         }
 
+        private bool IsEpisodeChanged(Page? firstEpisodePage, Page currentPage)
+        {
+            if (firstEpisodePage == null)
+            {
+                return false;
+            }
+            return currentPage.EpisodeTitle != string.Empty;
+        }
+
+        private bool IsChapterChanged(Page? firstChapterPage, Page currentPage)
+        {
+            if (firstChapterPage == null)
+            {
+                return false;
+            }
+            return currentPage.ChapterTitle != string.Empty;
+        }
+
+
         private Page ParsePage(IHtmlDocument doc)
         {
+            if (doc.Url.EndsWith("192"))
+            {
+                Debug.WriteLine("192");
+            }
             var chapterTitle = doc.QuerySelector(EpisodePageSelector.CHAPTER_TITLE_SELECTOR)?.TextContent.Trim() ?? string.Empty;
             var episodeTitle = doc.QuerySelector(EpisodePageSelector.EPISODE_TITLE_SELECTOR)?.TextContent.Trim() ?? string.Empty;
-            if (chapterTitle != string.Empty && episodeTitle == string.Empty)
-            {
-                episodeTitle = chapterTitle; // セクションタイトルがない場合はチャプタータイトルをセクションタイトルとして扱う
-                chapterTitle = string.Empty; // チャプタータイトルは空にする
-            }
             var (pageNumber, totalPageNumber) = GetPageNumber(doc);
             var nextPageLink = (doc.QuerySelector(EpisodePageSelector.NEXT_PAGE_LINK_SELECTOR) as IHtmlLinkElement)?.Href ?? string.Empty;
             var mainContent = doc.QuerySelector(EpisodePageSelector.MAIN_CONTENT_SELECTOR)

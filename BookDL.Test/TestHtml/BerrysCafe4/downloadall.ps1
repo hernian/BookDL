@@ -1,5 +1,5 @@
-$base = "https://www.berrys-cafe.jp/book/n1615134"
-$dst="www.berrys-cafe.jp.book.n1615134"
+$base = "https://www.berrys-cafe.jp/book/n1781612"
+$dst="www.berrys-cafe.jp.book.n1781612"
 $start = 1
 $data = [System.Collections.Generic.List[object]]::new()
 

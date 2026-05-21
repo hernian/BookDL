@@ -3,6 +3,7 @@ using BookDL.Infrastructure;
 using BookDL.Infrastructure.Generator;
 using BookDL.Infrastructure.Generator.SingleHtml;
 using BookDL.Infrastructure.Parser;
+using BookDL.Infrastructure.Parser.BerrysCafe;
 using BookDL.Infrastructure.Parser.Narou;
 using BookDL.Presentation;
 using BookDL.Services;
@@ -30,6 +31,7 @@ namespace BookDL
             services.AddSingleton<IBrowserService>(sp => sp.GetRequiredService<EdgeService>());
             services.AddSingleton<IBrowserWindow>(sp => sp.GetRequiredService<EdgeService>());
             services.AddSingleton<IBookParserFactoryAdapter, NarouParserFactoryAdapter>();
+            services.AddSingleton<IBookParserFactoryAdapter, BerrysCafeParserFactoryAdapter>();
             services.AddSingleton<IBookParserFactory>(sp =>
             {
                 var browserService = sp.GetRequiredService<IBrowserService>();

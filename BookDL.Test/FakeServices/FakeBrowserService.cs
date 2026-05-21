@@ -28,7 +28,11 @@ namespace BookDL.Test.FakeServices
 
         public string GetDom()
         {
-            return _htmlMap[_currentUrl];
+            if (!_htmlMap.TryGetValue(_currentUrl, out string? html))
+            {
+                throw new InvalidOperationException($"GetDom. Invalid url. {_currentUrl}");
+            }
+            return html!;
         }
 
         public void SetBrowserForeground()
