@@ -9,10 +9,12 @@
 
   <ItemGroup>
     <None Remove="TestHtml\**\*" />
+    <None Remove="TestJson\**\*" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="TestHtml\**\*" />
+    <EmbeddedResource Include="TestJson\**\*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +28,10 @@
 
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestJson\" />
   </ItemGroup>
 
 </Project>

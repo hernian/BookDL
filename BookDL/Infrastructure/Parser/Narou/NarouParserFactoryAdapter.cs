@@ -5,19 +5,19 @@ using System.Text;
 
 namespace BookDL.Infrastructure.Parser.Narou
 {
-    public class NarouBookParserFactoryAdapter : IBookParserFactoryAdapter
+    public class NarouParserFactoryAdapter : IBookParserFactoryAdapter
     {
         public string Name { get; } = "なろう";
 
         private readonly IBrowserService _browserService;
-        public NarouBookParserFactoryAdapter(IBrowserService browserService)
+        public NarouParserFactoryAdapter(IBrowserService browserService)
         {
             _browserService = browserService;
         }
 
         public Task<IBookParser?> CreateParserAsync(IHtmlDocument doc, string bookUrl, CancellationToken ct)
         {
-            return NarouBookParser.CreateAsync(_browserService, doc, bookUrl, ct);
+            return NarouParser.CreateAsync(_browserService, doc, bookUrl, ct);
         }
     }
 }

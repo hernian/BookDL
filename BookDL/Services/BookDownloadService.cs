@@ -50,7 +50,6 @@ namespace BookDL.Services
                 {
                     throw new NotSupportedSiteException(bookUrl);
                 }
-                await _bookParser.InitializeAsync(ct);
                 // InitialyzeAsyncの後はBookInfoに値が設定される
                 return _bookParser.BookInfo!;
             }, ct);

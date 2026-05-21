@@ -29,7 +29,7 @@ namespace BookDL
             services.AddSingleton<EdgeService>();
             services.AddSingleton<IBrowserService>(sp => sp.GetRequiredService<EdgeService>());
             services.AddSingleton<IBrowserWindow>(sp => sp.GetRequiredService<EdgeService>());
-            services.AddSingleton<IBookParserFactoryAdapter, NarouBookParserFactoryAdapter>();
+            services.AddSingleton<IBookParserFactoryAdapter, NarouParserFactoryAdapter>();
             services.AddSingleton<IBookParserFactory>(sp =>
             {
                 var browserService = sp.GetRequiredService<IBrowserService>();

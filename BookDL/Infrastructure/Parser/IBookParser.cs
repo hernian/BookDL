@@ -12,7 +12,6 @@ namespace BookDL.Infrastructure.Parser
     public interface IBookParser
     {
         BookInfo? BookInfo { get;}
-        Task InitializeAsync(CancellationToken ct);
         Task<Book> DownloadBookAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct);
     }
 }

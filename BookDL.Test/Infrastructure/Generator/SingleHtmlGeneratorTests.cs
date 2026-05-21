@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Diagnostics;
 using Moq;
+using BookDL.Test.TestUtilities;
 namespace BookDL.Test;
 
 [TestClass]
@@ -13,10 +14,7 @@ public class SingleHtmlGeneratorTests
     [TestMethod]
     public void TestGenerateOutputAsync()
     {
-        var enc = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-        var json = File.ReadAllText(@"D:\temp\BookDL\「なんとなく惹かれる」を信じていい.json", enc);
-        var book = JsonSerializer.Deserialize<Book>(json);
-        Assert.IsNotNull(book);
+        var book = JsonLoader.LoadJsonObject<Book>("BookDL.Test.TestJson.nantonaku.json");
 
         var resourceService = new ResourceService();
 

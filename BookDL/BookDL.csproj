@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Infrastructure\Parser\BerrysCafe\BerrysCafeParser.cs~RF28b4363.TMP" />
     <None Remove="Resources\SingleHtml\single.html" />
   </ItemGroup>
 

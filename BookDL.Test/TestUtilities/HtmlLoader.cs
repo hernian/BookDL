@@ -25,7 +25,7 @@ namespace BookDL.Test.TestUtilities
             return LoadEmbeddedResource(resourceName);
         }
 
-        public void LoadHtmlMap(params string[] urls)
+        public void LoadHtmlMap(IEnumerable<string> urls)
         {
             foreach (var url in urls)
             {

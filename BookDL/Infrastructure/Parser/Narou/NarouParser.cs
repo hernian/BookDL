@@ -10,8 +10,9 @@ using AngleSharp.Dom;
 
 namespace BookDL.Infrastructure.Parser.Narou
 {
-    public class NarouBookParser : IBookParser
+    public class NarouParser : IBookParser
     {
+        private record TitleAuthor(string Title, string Author, string AuthorKatakana);
         private record EpirodeInfo(int TotalEpisode, string ChapterTitle, Episode Episode);
 
         // タイトルページのセレクタ
@@ -44,8 +45,31 @@ namespace BookDL.Infrastructure.Parser.Narou
             var author = string.Empty;
             var authorKatakana = string.Empty;
 
-            var titleElement = doc.QuerySelector(TITLE_SELECTOR);
-            if (titleElement == null)
+            var titleAuthor = await GetTitleAuthorFromTitlePageAsync(browserService, doc);
+            if (titleAuthor == null)
+            {
+                titleAuthor = await GetTitleAuthorFromEpisodePageAsync(browserService, doc);
+                if (titleAuthor == null)
+                {
+                    return null;
+                }
+            }
+            var firstEpisodeUrl = GetFirstEpisodeUrl(doc) ?? string.Empty;
+            var bookInfo = new BookInfo(
+                BookUrl: bookUrl, // リダイレクトされてdocが示すURLとbookUrlは異なる可能性がある。ここではユーザーが指定したURLを保持する。
+                Title: titleAuthor.Title,
+                TitleKatakana: string.Empty,
+                Author: titleAuthor.Author,
+                AuthorKatakana: titleAuthor.AuthorKatakana);
+            return new NarouParser(browserService, bookInfo, firstEpisodeUrl);
+        }
+
+        private static async Task<TitleAuthor?> GetTitleAuthorFromTitlePageAsync(IBrowserService browserService, IHtmlDocument doc)
+        {
+            var author = string.Empty;
+            var authorKatakana = string.Empty;
+            var title = doc.QuerySelector(TITLE_SELECTOR)?.TextContent.Trim();
+            if (string.IsNullOrWhiteSpace(title))
             {
                 return null;
             }
@@ -69,18 +93,29 @@ namespace BookDL.Infrastructure.Parser.Narou
                 author = authorAnchorElement.TextContent.Trim();
                 authorKatakana = await GetAuthorKatakanaAsync(browserService, authorAnchorElement.Href);
             }
-            var firstEpisodeUrl = GetFirstEpisodeUrl(doc);
-            if (string.IsNullOrWhiteSpace(firstEpisodeUrl))
+            return new TitleAuthor(title, author, authorKatakana);
+        }
+
+        private static async Task<TitleAuthor?> GetTitleAuthorFromEpisodePageAsync(IBrowserService browserService, IHtmlDocument doc)
+        {
+            var anchorElemes = doc.QuerySelectorAll(TITLE_AUTHOR_SELECTOR);
+            if (anchorElemes.Count < 2)
             {
                 return null;
             }
-            var bookInfo = new BookInfo(
-                BookUrl: bookUrl, // リダイレクトされてdocが示すURLとは違うかもしれないが、ユーザーが指定したURLを保持する
-                Title: titleElement.TextContent.Trim(),
-                TitleKatakana: string.Empty,
-                Author: author,
-                AuthorKatakana: authorKatakana);
-            return new NarouBookParser(browserService, bookInfo, firstEpisodeUrl);
+            var title = anchorElemes[0].TextContent.Trim();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return null;
+            }
+            var author = anchorElemes[1].TextContent.Trim();
+            if (string.IsNullOrWhiteSpace(author))
+            {
+                return null;
+            }
+            var authorPageAnchor = (IHtmlAnchorElement)anchorElemes[1];
+            var authorKatakana = await GetAuthorKatakanaAsync(browserService, authorPageAnchor.Href);
+            return new TitleAuthor(title, author, authorKatakana);
         }
 
         private static async Task<string> GetAuthorKatakanaAsync(IBrowserService browserService, string authorPageUrl)
@@ -117,16 +152,11 @@ namespace BookDL.Infrastructure.Parser.Narou
         private readonly BookInfo _bookInfo;
         private readonly string _firstEpisodeUrl;
 
-        public NarouBookParser(IBrowserService browserService, BookInfo bookInfo, string firstEposodeUrl)
+        public NarouParser(IBrowserService browserService, BookInfo bookInfo, string firstEposodeUrl)
         {
             _browserService = browserService;
             _bookInfo = bookInfo;
             _firstEpisodeUrl = firstEposodeUrl;
-        }
-
-        public Task InitializeAsync(CancellationToken ct)
-        {
-            return Task.CompletedTask;
         }
 
         public async Task<Book> DownloadBookAsync(BookInfo bookInfo, IProgress<DownloadReport> progress, CancellationToken ct)

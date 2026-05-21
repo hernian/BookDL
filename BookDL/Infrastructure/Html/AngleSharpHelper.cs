@@ -92,7 +92,7 @@ namespace BookDL.Infrastructure.Html
             }
         }
 
-        private static RubyNode ConvertRuby(IHtmlElement srcElement)
+        public static RubyNode ConvertRuby(IHtmlElement srcElement)
         {
             var rubyItemList = new List<RubyItem>();
             var textContent = default(string);
