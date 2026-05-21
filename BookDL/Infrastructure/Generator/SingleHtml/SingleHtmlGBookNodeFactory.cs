@@ -16,25 +16,27 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
 
         public override GEpisode CreateGEpisode(Episode source)
         {
-            var id = $"p-{source.Index + 1}";
-            var fragment = _doc.CreateDocumentFragment();
-            var section = fragment.AppendElement("section", attr: ("id", id));
+            var id = $"p-{source.Index}";
+            var section = (IHtmlElement)_doc.CreateElement("section");
+            section.SetAttribute("id", id);
 
-            var title = !string.IsNullOrWhiteSpace(source.Title) ? source.Title : "(無題)";
-            var h2 = section.AppendElement("h2");
-            h2.AppendTateChuYokoText(title);
+            if (!string.IsNullOrWhiteSpace(source.Title))
+            {
+                var h2 = section.AppendElement("h2");
+                h2.AppendTateChuYokoText(source.Title);
+            }
 
             foreach (var para in source.Paragraphs)
             {
                 section.AppendParagraph(para);
             }
 
-            var size = fragment.GetBytes().Length;
+            var size = section.GetBytes().Length;
             return new HtmlEpisode(
                 Source: source,
                 Size: size,
                 Id: id,
-                HtmlFragment: fragment);
+                SectionElement: section);
         }
     }
 }

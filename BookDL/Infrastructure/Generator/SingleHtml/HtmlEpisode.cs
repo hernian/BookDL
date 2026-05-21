@@ -1,4 +1,4 @@
-﻿using AngleSharp.Dom;
+﻿using AngleSharp.Html.Dom;
 using BookDL.Domain;
 
 namespace BookDL.Infrastructure.Generator.SingleHtml
@@ -7,6 +7,6 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
         Episode Source,
         int Size,
         string Id,
-        IDocumentFragment HtmlFragment)
+        IHtmlElement SectionElement)
         : GEpisode(Source, Size);
 }

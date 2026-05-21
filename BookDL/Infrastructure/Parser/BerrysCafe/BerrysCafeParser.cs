@@ -212,22 +212,86 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
             return currentPage.ChapterTitle != string.Empty;
         }
 
+        private class PageContext
+        {
+            private readonly List<ParagraphNode> _paragraphList = new();
+            private List<IBookNode> _nodeList = new();
+            private readonly StringBuilder _sb = new();
+            private int _breakRowCount = 0;
+
+            public void FlsuhBreakRow()
+            {
+                if (_nodeList.Count > 0)
+                {
+                    if (_breakRowCount >= 2)
+                    {
+                        _paragraphList.Add(new ParagraphNode(_nodeList));
+                        _nodeList = new();
+                    }
+                    else if (_breakRowCount == 1)
+                    {
+                        _nodeList.Add(new BreakRowNode());
+                    }
+                    _breakRowCount = 0;
+                }
+            }
+
+            public void FlushText()
+            {
+                if (_sb.Length > 0)
+                {
+                    _nodeList.Add(new TextNode(_sb.ToString()));
+                    _sb.Clear();
+                }
+            }
+
+            public IReadOnlyList<ParagraphNode> Flush()
+            {
+                this.FlushText();
+                // BreakRowのフラッシュは不要
+                // この次の処理でパラグラフを確定するし、パラグラフの最後の要素として<br>を入れたくない。
+                // this.FlsuhBreakRow();
+                if (_nodeList.Count > 0)
+                {
+                    _paragraphList.Add(new ParagraphNode(_nodeList));
+                }
+                return _paragraphList;
+            }
+
+            public void AddText(string text)
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return;
+                }
+                this.FlsuhBreakRow();
+                _sb.Append(text);
+            }
+
+            public void AddBreakRow()
+            {
+                this.FlushText();
+                _breakRowCount++;
+            }
+
+            public void AddNode(IBookNode node)
+            {
+                this.FlushText();
+                this.FlsuhBreakRow();
+                _nodeList.Add(node);
+            }
+        }
+
 
         private Page ParsePage(IHtmlDocument doc)
         {
-            if (doc.Url.EndsWith("192"))
-            {
-                Debug.WriteLine("192");
-            }
             var chapterTitle = doc.QuerySelector(EpisodePageSelector.CHAPTER_TITLE_SELECTOR)?.TextContent.Trim() ?? string.Empty;
             var episodeTitle = doc.QuerySelector(EpisodePageSelector.EPISODE_TITLE_SELECTOR)?.TextContent.Trim() ?? string.Empty;
             var (pageNumber, totalPageNumber) = GetPageNumber(doc);
             var nextPageLink = (doc.QuerySelector(EpisodePageSelector.NEXT_PAGE_LINK_SELECTOR) as IHtmlLinkElement)?.Href ?? string.Empty;
             var mainContent = doc.QuerySelector(EpisodePageSelector.MAIN_CONTENT_SELECTOR)
                 ?? throw new InvalidOperationException("Missing episode body.");
-            var paragraphList = new List<ParagraphNode>();
-            var nodeList = new List<IBookNode>();
-            var isRowBreaked = false;
+            var pageContext = new PageContext();
             foreach (var child in mainContent.ChildNodes)
             {
                 if (child is IHtmlElement elem)
@@ -235,58 +299,25 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
                     var tag = elem.TagName.ToLower();
                     if (tag == "br")
                     {
-                        if (isRowBreaked)
-                        {
-                            paragraphList.Add(new ParagraphNode(nodeList));
-                            nodeList = new List<IBookNode>();
-                            isRowBreaked = false;
-                        }
-                        else if (nodeList.Count > 0)
-                        {
-                            isRowBreaked = true;
-                        }
+                        pageContext.AddBreakRow();
                     }
                     else if (tag == "ruby")
                     {
-                        if (isRowBreaked)
-                        {
-                            nodeList.Add(new BreakRowNode());
-                            isRowBreaked = false;
-                        }
-                        nodeList.Add(AngleSharpHelper.ConvertRuby(elem));
+                        pageContext.AddNode(AngleSharpHelper.ConvertRuby(elem));
                     }
                     else
                     {
-                        var textContent = elem.TextContent.Replace("\n", string.Empty);
-                        if (textContent != string.Empty)
-                        {
-                            if (isRowBreaked)
-                            {
-                                nodeList.Add(new BreakRowNode());
-                                isRowBreaked = false;
-                            }
-                            nodeList.Add(new TextNode(textContent));
-                        }
+                        var textContent = elem.TextContent.Trim();
+                        pageContext.AddText(textContent);
                     }
                 }
                 else if (child is IText text)
                 {
-                    var textContent = text.TextContent.Replace("\n", string.Empty);
-                    if (textContent != string.Empty)
-                    {
-                        if (isRowBreaked)
-                        {
-                            nodeList.Add(new BreakRowNode());
-                            isRowBreaked = false;
-                        }
-                        nodeList.Add(new TextNode(textContent));
-                    }
+                    var textContent = text.TextContent.Trim();
+                    pageContext.AddText(textContent);
                 }
             }
-            if (nodeList.Count > 0)
-            {
-                paragraphList.Add(new ParagraphNode(nodeList));
-            }
+            var paragraphList = pageContext.Flush();
             return new Page(
                 ChapterTitle: chapterTitle,
                 EpisodeTitle: episodeTitle,

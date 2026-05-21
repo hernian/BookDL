@@ -1,4 +1,5 @@
-﻿using AngleSharp.Dom;
+﻿using AngleSharp;
+using AngleSharp.Dom;
 using AngleSharp.Html;
 using AngleSharp.Html.Dom;
 using BookDL.Domain;
@@ -10,11 +11,6 @@ namespace BookDL.Infrastructure.Html
     public static class AngleSharpExtensions
     {
         private static readonly Encoding UTF8_WO_BOM = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-        private static readonly PrettyMarkupFormatter FORMATTER = new()
-        {
-            Indentation = "  ",
-            NewLine = "\n",
-        };
 
         public static IHtmlDocument GetOwnerSafe(this INode node)
         {
@@ -26,20 +22,29 @@ namespace BookDL.Infrastructure.Html
             return doc;
         }
 
-
-        public static byte[] GetBytes(this IDocumentFragment frag)
+        public static byte[] GetBytes(this IHtmlElement element)
         {
+            var formatter = new PrettyMarkupFormatter()
+            {
+                Indentation = "  ",
+                NewLine = "\n",
+            };
             using var ms = new MemoryStream();
             using (var writer = new StreamWriter(ms, UTF8_WO_BOM))
             {
-                frag.ToHtml(writer, FORMATTER);
+                element.ToHtml(writer, formatter);
             }
             return ms.ToArray();
         }
 
         public static void Save(this IDocument doc, TextWriter writer)
         {
-            doc.ToHtml(writer, FORMATTER);
+            var formatter = new PrettyMarkupFormatter()
+            {
+                Indentation = "  ",
+                NewLine = "\n",
+            };
+            doc.ToHtml(writer, formatter);
         }
 
         public static T AddAfterSelf<T>(this IElement element, T newNode) where T : INode
@@ -47,6 +52,13 @@ namespace BookDL.Infrastructure.Html
             var parent = element.Parent ?? throw new InvalidOperationException("Missing parent.");
             var next = element.NextSibling;
             parent.InsertBefore(newNode, next);
+            return newNode;
+        }
+
+        public static T AddBeforeSelf<T>(this IElement element, T newNode) where T : INode
+        {
+            var parent = element.Parent ?? throw new InvalidOperationException("Missing parent.");
+            parent.InsertBefore(newNode, element);
             return newNode;
         }
 

@@ -14,10 +14,27 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
         private const int SPLIT_SIZE = 2 * 1024 * 1024; // 2MB
         private static readonly TagLog<SingleHtmlGenerator> LOG = new();
 
+        private static bool IsChapterOnly(Book book)
+        {
+            foreach (var chapter in book.Chapters)
+            {
+                if (chapter.Episodes.Count != 1)
+                {
+                    return false;
+                }
+                if (!string.IsNullOrWhiteSpace(chapter.Episodes[0].Title))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         private readonly Book _book;
         private readonly string _outputDirectory;
         private readonly IResourceService _resourceService;
         private readonly ITextWriterFactory _storageService;
+        private readonly bool _chapterOnly;
         public SingleHtmlGenerator(
             Book book,
             string outputDirectory,
@@ -29,6 +46,7 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
             _outputDirectory = outputDirectory;
             _resourceService = resourceService;
             _storageService = storageService;
+            _chapterOnly = IsChapterOnly(book);
         }
 
         public async Task GenerateOutputAsync(CancellationToken ct)
@@ -80,9 +98,11 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
             GenerateBookPartToc(body, bookPart);
             foreach (var chapter in bookPart.Chapters)
             {
+                var chapterTitle = chapter.Source.Title;
                 foreach (var episode in chapter.Episodes.Cast<HtmlEpisode>())
                 {
-                    GenerateEpisode(body, episode);
+                    GenerateEpisode(body, episode, chapterTitle);
+                    chapterTitle = string.Empty;
                 }
             }
 
@@ -108,29 +128,64 @@ namespace BookDL.Infrastructure.Generator.SingleHtml
             var section = body.AppendElement("section", attr: ("id", "p-toc"));
 
             section.AppendElementWithText("h1", "目次");
-            foreach (var chapter in bookPart.Chapters)
+            if (_chapterOnly)
             {
-                var hasTitle = !string.IsNullOrEmpty(chapter.Source.Title);
-                if (bookPart.Chapters.Count > 1 || hasTitle)
+                // Berry's Cafeではチャプタータイトルがエピソードタイトルとして扱われることがある
+                // その場合、各チャプターは1つのエピソードのみを持ち、エピソードにタイトルはなく、チャプターにはタイトルがある。
+                // ただし、全体が1チャプター1エピソードで、チャプタータイトル・エピソードタイトルの両方を持たない、もとのサイトで目次がない場合もある。
+                foreach (var chapter in bookPart.Chapters)
                 {
-                    var h2 = section.AppendElement("h2");
-                    h2.AppendTateChuYokoText(hasTitle ? chapter.Source.Title : "(無題)");
-                }
-                foreach (var episode in chapter.Episodes.Cast<HtmlEpisode>())
-                {
+                    var episode = (HtmlEpisode)chapter.Episodes[0];
                     var p = section.AppendElement("p", attr: ("class", "indent"));
                     var a = p.AppendElement("a", attr: ("href", $"#{episode.Id}"));
-                    a.AppendTateChuYokoText(episode.Source.Title);
+                    var title = !string.IsNullOrWhiteSpace(chapter.Source.Title) ? chapter.Source.Title : "(無題)";
+                    a.AppendTateChuYokoText(title);
+                }
+            }
+            else
+            {
+                foreach (var chapter in bookPart.Chapters)
+                {
+                    var hasTitle = !string.IsNullOrEmpty(chapter.Source.Title);
+                    if (bookPart.Chapters.Count > 1 || hasTitle)
+                    {
+                        var h2 = section.AppendElement("h2");
+                        h2.AppendTateChuYokoText(chapter.Source.Title);
+                    }
+                    foreach (var episode in chapter.Episodes.Cast<HtmlEpisode>())
+                    {
+                        var p = section.AppendElement("p", attr: ("class", "indent"));
+                        var a = p.AppendElement("a", attr: ("href", $"#{episode.Id}"));
+                        var title = !string.IsNullOrWhiteSpace(episode.Source.Title) ? episode.Source.Title : "(無題)";
+                        a.AppendTateChuYokoText(title);
+                    }
                 }
             }
         }
 
-        private void GenerateEpisode(IElement body, HtmlEpisode episode)
+        private void GenerateEpisode(IElement body, HtmlEpisode episode, string chapterTitle)
         {
             var doc = body.GetOwnerSafe();
             // エピソードDOMを作ったときと異なるdocへ追加するため、インポートする必要がある。
-            var fragment = doc.Import(episode.HtmlFragment, deep: true);
-            body.AppendChild(fragment);
+            var section = doc.Import(episode.SectionElement, deep: true);
+            // チャプターオンリーのときはepisode生成時にエピソードタイトルが分からないので、
+            // ここでエピソードタイトルとしてチャプタータイトルを用いる
+            var hasChapterTitle = !string.IsNullOrWhiteSpace(chapterTitle);
+            if (_chapterOnly || hasChapterTitle)
+            {
+                var tag = _chapterOnly ? "h2" : "h1";
+                var h2 = doc.CreateElement(tag);
+                h2.AppendTateChuYokoText(chapterTitle);
+                if (section.FirstChild is null)
+                {
+                    section.AppendChild(h2);
+                }
+                else
+                {
+                    section.InsertBefore(h2, section.FirstChild);
+                }
+            }
+            body.AppendChild(section);
         }
     }
 }

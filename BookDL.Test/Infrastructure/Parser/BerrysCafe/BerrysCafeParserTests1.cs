@@ -90,6 +90,7 @@ public class BerrysCafeParserTests1
         Assert.HasCount(38, book.Chapters[0].Episodes);
         Assert.AreEqual("1.１年後に死ぬ君が必要なんだ。", book.Chapters[0].Episodes[0].Title);
         Assert.AreEqual("38.これからもっと幸せにする。日陰、愛してる。", book.Chapters[0].Episodes[37].Title);
+        // JsonLoader.SaveJsonObject(@"D:\MyPrograms\BookDL\BookDL.Test\TestJson\dekiaifuyou.json", book);
     }
 
     [TestMethod]
