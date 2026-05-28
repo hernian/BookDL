@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="ja" class="vrtl">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        .vrtl {
+            -webkit-writing-mode: vertical-rl;
+            -webkit-text-orientation: mixed;
+            -epub-writing-mode: vertical-rl;
+            -epub-text-orientation: mixed;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            line-break: strict;
+            margin: 0;
+            padding: 0;
+            font-family: "Hiragino Mincho ProN", "MS Mincho", serif;
+        }
+        section {
+            break-after: page;
+            page-break-after: always;
+        }
+        /* 最後の section は改ページ不要 */
+        section:last-of-type {
+            break-after: auto;
+            page-break-after: auto;
+        }
+        .tcy {
+            text-combine-upright: all;
+            -webkit-text-combine: horizontal;
+            -epub-text-combine: horizontal;
+        }
+        .indent {
+            text-indent: 1em;
+        }
+        #p-cover {
+            position: relative;
+        }
+        #p-cover h1, h2 {
+            margin-block-start: 1em;
+        }
+    </style>
+</head>
+<body>
+</body>
+</html>

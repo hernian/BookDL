@@ -1,0 +1,12 @@
+﻿<UserControl x:Class="BookDL.Presentation.ManipulateControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:BookDL.Presentation"
+             mc:Ignorable="d">
+    <Grid ColumnDefinitions="Auto,Auto" Width="Auto" Height="Auto" Margin="10">
+        <TextBlock Grid.Column="0" Margin="10,5,10,5">ブラウザを操作してください</TextBlock>
+        <Button Grid.Column="1" Width="Auto" Content="操作終了" Command="{Binding DataContext.EndManipulateCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+    </Grid>
+</UserControl>

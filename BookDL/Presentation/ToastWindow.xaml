@@ -1,0 +1,49 @@
+﻿<Window x:Class="BookDL.Presentation.ToastWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BookDL.Presentation"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ShowInTaskbar="False"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <sys:TimeSpan x:Key="InfoDuration">0:0:3</sys:TimeSpan>
+        <sys:TimeSpan x:Key="ErrorDuration">0:0:6</sys:TimeSpan>
+        <SolidColorBrush x:Key="InfoBackgroundBrush"  Color="#CC1A73E8"/>
+        <SolidColorBrush x:Key="InfoForegroundBrush"  Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#CCB00020"/>
+        <SolidColorBrush x:Key="ErrorForegroundBrush" Color="#FFFFFFFF"/>
+    </Window.Resources>
+    <Border x:Name="toastBorder"
+            CornerRadius="6"
+            Padding="12,8"
+            MinWidth="200"
+            MaxWidth="400">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="messageText"
+                       Grid.Column="0"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center"/>
+
+            <Button x:Name="closeButton"
+                    Grid.Column="1"
+                    Content="✕"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Cursor="Hand"
+                    FontSize="12"/>
+        </Grid>
+    </Border>
+</Window>
