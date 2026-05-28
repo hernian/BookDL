@@ -40,10 +40,17 @@ namespace BookDL.Presentation
 
             _toast = new Toast(this);
 
+            this.SourceInitialized += MainWindow_SourceInitialized;
             this.ContentRendered += MainWindow_ContentRendered;
             this.Closing += MainWindow_Closing;
             this.IsEnabled = false;
 
+        }
+
+        private void MainWindow_SourceInitialized(object? sender, EventArgs e)
+        {
+            var helper = new WindowInteropHelper(this);
+            helper.Owner = _browserWindow.GetBrowserWindow();
         }
 
         private async void MainWindow_ContentRendered(object? sender, EventArgs e)
@@ -56,10 +63,8 @@ namespace BookDL.Presentation
             _initialized = true;
             var wih= new WindowInteropHelper(this);
             var hWndSelf = wih.Handle;
-            var hWndBrowser = _browserWindow.GetBrowserWindow();
-            Log.Debug($"MainWindow_ContentRendered. hWndSelf: 0x{hWndSelf:x8}, hWndBrowser: 0x{hWndBrowser:x8}");
-            _winApi.SetWindowOwner(hWndSelf, hWndBrowser);
-            _winApi.SetForeground(hWndSelf);
+            var workingArea = _winApi.GetWorkingArea(hWndSelf);
+            _browserWindow.Initialize((int)workingArea.Left, (int)workingArea.Top);
             _mainViewModel.Initialize();
             this.IsEnabled = true;
         }

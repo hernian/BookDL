@@ -3,15 +3,48 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows;
+using System.Windows.Interop;
 
 namespace BookDL.Infrastructure
 {
+    public enum ZOrderOption
+    {
+        Unchanged,
+        Top,
+        Bottom,
+        TopMost,
+        NoTopMost
+    }
+
+    public enum WindowVisibility
+    {
+        Unchanged,
+        Show,
+        Hide
+    }
+
+    public record struct SetWindowPosParam(
+        bool ChangeSize = false,
+        bool ChangePosition = false,
+        ZOrderOption ZOrder = ZOrderOption.Unchanged,
+        bool Activate = false,
+        WindowVisibility Visibility = WindowVisibility.Unchanged,
+        double Left = 0,
+        double Top = 0,
+        double Width = 0,
+        double Height = 0);
+
+
     public interface IWinApi
     {
         void SetWindowOwner(IntPtr hWndTarget, IntPtr hWndOwner);
         IntPtr FindWindowByTitleContains(string keyword);
         Process GetWindowProcess(IntPtr hWnd);
         void SetForeground(IntPtr hWnd);
+
+        Rect GetWorkingArea(IntPtr hWnd);
+        void SetWindowPos(IntPtr hWnd, SetWindowPosParam swpp);
     }
     public partial class WinApi : IWinApi
     {
@@ -103,6 +136,91 @@ namespace BookDL.Infrastructure
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        
+        private const int MONITOR_DEFAULTTONEAREST = 2;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, int dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public int dwFlags;
+        }
+
+        public Rect GetWorkingArea(IntPtr hWnd)
+        {
+            IntPtr hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+
+            MONITORINFO mi = new MONITORINFO();
+            mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+
+            if (!GetMonitorInfo(hMonitor, ref mi))
+                throw new System.ComponentModel.Win32Exception();
+
+            return new Rect(
+                mi.rcWork.Left,
+                mi.rcWork.Top,
+                mi.rcWork.Right - mi.rcWork.Left,
+                mi.rcWork.Bottom - mi.rcWork.Top
+            );
+        }
+
+        public void SetWindowPos(IntPtr hWnd, SetWindowPosParam p)
+        {
+            // hWndInsertAfter の決定
+            IntPtr insertAfter = p.ZOrder switch
+            {
+                ZOrderOption.Top => HWND_TOP,
+                ZOrderOption.Bottom => HWND_BOTTOM,
+                ZOrderOption.TopMost => HWND_TOPMOST,
+                ZOrderOption.NoTopMost => HWND_NOTOPMOST,
+                _ => IntPtr.Zero // Unchanged
+            };
+
+            // フラグ生成
+            uint flags = 0;
+
+            if (!p.ChangeSize)
+                flags |= SWP_NOSIZE;
+
+            if (!p.ChangePosition)
+                flags |= SWP_NOMOVE;
+
+            if (p.ZOrder == ZOrderOption.Unchanged)
+                flags |= SWP_NOZORDER;
+
+            if (!p.Activate)
+                flags |= SWP_NOACTIVATE;
+
+            flags |= p.Visibility switch
+            {
+                WindowVisibility.Show => SWP_SHOWWINDOW,
+                WindowVisibility.Hide => SWP_HIDEWINDOW,
+                _ => 0
+            };
+
+            // double → int（再現性のため Math.Round）
+            int x = (int)Math.Round(p.Left);
+            int y = (int)Math.Round(p.Top);
+            int w = (int)Math.Round(p.Width);
+            int h = (int)Math.Round(p.Height);
+
+            SetWindowPos(hWnd, insertAfter, x, y, w, h, flags);
+        }
     }
 }

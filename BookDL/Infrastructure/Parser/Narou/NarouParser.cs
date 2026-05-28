@@ -147,15 +147,14 @@ namespace BookDL.Infrastructure.Parser.Narou
 
         /******************************************************************************************************/
         // ここからインスタンスメンバー
-        public BookInfo? BookInfo => _bookInfo;
+        public BookInfo BookInfo { get; }
         private readonly IBrowserService _browserService;
-        private readonly BookInfo _bookInfo;
         private readonly string _firstEpisodeUrl;
 
         public NarouParser(IBrowserService browserService, BookInfo bookInfo, string firstEposodeUrl)
         {
             _browserService = browserService;
-            _bookInfo = bookInfo;
+            this.BookInfo = bookInfo;
             _firstEpisodeUrl = firstEposodeUrl;
         }
 

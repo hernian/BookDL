@@ -23,6 +23,8 @@ namespace BookDL
         private static ServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
+            services.AddSingleton<IStorageService, StorageService>();
+            services.AddSingleton<IShellService, ShellService>();
             services.AddSingleton<IWinApi, WinApi>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<IResourceService, ResourceService>();
@@ -60,8 +62,8 @@ namespace BookDL
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            var localAppPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var logPath = Path.Combine(localAppPath, "Hernian", "BookDL", "logs", "log-.log");
+            var storageService = _services.GetRequiredService<IStorageService>();
+            var logPath = storageService.GetProfilePath("logs", "log-.log");
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(

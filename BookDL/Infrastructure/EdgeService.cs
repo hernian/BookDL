@@ -1,9 +1,8 @@
-﻿using BookDL.Domain;
-using OpenQA.Selenium.Edge;
-using System;
-using System.Collections.Generic;
+﻿using OpenQA.Selenium.Edge;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
+using System.Text.Json;
 
 namespace BookDL.Infrastructure
 {
@@ -21,6 +20,7 @@ namespace BookDL.Infrastructure
     {
         event EventHandler? BrowserClosed;
         IntPtr GetBrowserWindow();
+        void Initialize(int left, int top);
     }
 
     public class EdgeService : IBrowserService, IBrowserWindow, IDisposable
@@ -29,26 +29,41 @@ namespace BookDL.Infrastructure
 
         private const string SCRIPT_GET_DOM = "return document.documentElement.outerHTML;";
         private const string SCRIPT_GET_URL = "return window.location.href;";
-        private const int GET_BROWSER_WINDOW_RETRY_COUNT = 50;
-        private const int GET_BROWSER_WINDOW_RETRY_INTERVAL = 100; // ms
+        private const int GET_BROWSER_WINDOW_DELAY = 100; // 100ms
+        private const int GET_BROWSER_WINDOW_RETRY_COUNT = 100;
+        private const int GET_BROWSER_WINDOW_RETRY_INTERVAL = 100; // 200ms
 
         public event EventHandler? BrowserClosed;
 
         private readonly IWinApi _winApi;
+        private readonly IStorageService _storageService;
+        private readonly Stream _lockStream;
         private EdgeDriver _driver;
         private IntPtr _hWnd;
         private Process _process;
         private bool _disposed;
 
-        public EdgeService(IWinApi winApi)
+        public EdgeService(IWinApi winApi, IStorageService storageService)
         {
             _winApi = winApi;
+            _storageService = storageService;
 
+            var profileRoot = _storageService.GetProfilePath("profile");
+            _storageService.CreateDirectory(profileRoot);
+
+            var lockFilePath = Path.Combine(profileRoot, "BookDL.lock");
+            _lockStream = _storageService.OpenWriteSteam(lockFilePath);
             var service = EdgeDriverService.CreateDefaultService();
             service.HideCommandPromptWindow = true;
             var options = new EdgeOptions();
-            options.AddArgument("--remote-allow-origins=*");
-            // options.AddArgument("--window-size=1000,800");
+            options.AddArgument("--no-first-run");
+            options.AddArgument("--no-default-browser-check");
+            options.AddArgument($"--user-data-dir={profileRoot}");
+            options.AddArgument("--profile-directory=Default");
+            // Edgeのデフォルト画面がニュース等表示されているので
+            // 最初は見えないところでEdgeを表示し、
+            // 後に about:blank を表示させてから見えるところへ移動する。
+            options.AddArgument("--window-position=-32000,-32000");
             _driver = new EdgeDriver(service, options);
             if (_driver == null)
             {
@@ -73,6 +88,8 @@ namespace BookDL.Infrastructure
             _process.EnableRaisingEvents = true;
             _process.Exited += process_Exited;
             _driver.ExecuteScript($"document.title = 'BookDL'");
+            _driver.Navigate().GoToUrl("about:blank");
+            _driver.Manage().Window.Position = new System.Drawing.Point(0, 0);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -86,6 +103,7 @@ namespace BookDL.Infrastructure
                 // Dispose managed state (managed objects).
                 _process?.Close();
                 _driver?.Dispose();
+                _lockStream?.Dispose();
             }
             _disposed = true;
         }
@@ -95,6 +113,15 @@ namespace BookDL.Infrastructure
             Log.Debug("Dispose called.");
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Initialize(int left, int top)
+        {
+            var swpp = new SetWindowPosParam(
+                ChangePosition: true,
+                Left: left + 80,
+                Top: top + 10);
+            _winApi.SetWindowPos(_hWnd, swpp);
         }
 
         public IntPtr GetBrowserWindow()
@@ -144,17 +171,24 @@ namespace BookDL.Infrastructure
         private IntPtr FindBrowserWindow(EdgeDriver driver, out string uuidTitle)
         {
             uuidTitle = $"BookDL-{Guid.NewGuid()}";
-            driver.ExecuteScript($"document.title = '{uuidTitle}'");
-            Thread.Sleep(1000);
+            Thread.Sleep(GET_BROWSER_WINDOW_DELAY);
             var hWnd = IntPtr.Zero;
             for (var i = 0; i < GET_BROWSER_WINDOW_RETRY_COUNT; ++i)
             {
+                try
+                {
+                    driver.ExecuteScript($"document.title = '{uuidTitle}'");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Setting Edge title failed.");
+                }
+                Thread.Sleep(GET_BROWSER_WINDOW_RETRY_INTERVAL);
                 hWnd = _winApi.FindWindowByTitleContains(uuidTitle);
                 if (hWnd != IntPtr.Zero)
                 {
                     break;
                 }
-                Thread.Sleep(GET_BROWSER_WINDOW_RETRY_INTERVAL);
             }
             return hWnd;
         }
@@ -163,6 +197,74 @@ namespace BookDL.Infrastructure
         {
             this.BrowserClosed?.Invoke(this, e);
         }
+}
 
+public static class EdgeBlankProfileFactory
+    {
+        public static void EnsureBlankProfile(string profilePath)
+        {
+            var preferencesPath = Path.Combine(profilePath, "Preferences");
+
+/*
+            if (File.Exists(preferencesPath))
+            {
+                // 既存を壊したくない場合は何もしない
+                return;
+            }
+*/
+            var preferences = new
+            {
+                session = new
+                {
+                    startup_urls = new[] { "about:blank" },
+                    restore_on_startup = 4
+                },
+                homepage = "about:blank",
+                homepage_is_newtabpage = false,
+                browser = new
+                {
+                    show_home_button = true,
+                    check_default_browser = false
+                },
+                ntp = new
+                {
+                    custom_links = new
+                    {
+                        initialized = true
+                    }
+                },
+                distribution = new
+                {
+                    import_bookmarks = false,
+                    import_history = false,
+                    import_home_page = false,
+                    import_search_engine = false,
+                    import_saved_passwords = false,
+                    import_autofill_form_data = false,
+                    import_extensions = false,
+                    import_cookies = false
+                },
+                profile = new
+                {
+                    exit_type = "None",
+                    last_used = "Default"
+                },
+                browser_onboarding = new
+                {
+                    enabled = false
+                },
+                first_run_tabs = Array.Empty<string>()
+            };
+
+            var json = JsonSerializer.Serialize(
+                preferences,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+            File.WriteAllText(preferencesPath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
     }
 }

@@ -55,14 +55,17 @@ namespace BookDL.ViewModels
         private DownloadReport downloadReport = new DownloadReport(0, 0, 0);
 
         private readonly ISettingsService _settingsService;
+        private readonly IShellService _shellService;
         private readonly IBookDownloadService _bookDownloadService;
 
         public MainViewModel(
             ISettingsService settingsService,
+            IShellService shellService,
             IBookDownloadService bookDownloadService
             )
         {
             _settingsService = settingsService;
+            _shellService = shellService;
             _bookDownloadService = bookDownloadService;
             var currentState = _settingsService.CurrentState;
             this.BookUrl = currentState.BookInfo.BookUrl;
@@ -193,7 +196,7 @@ namespace BookDL.ViewModels
         [RelayCommand(CanExecute = nameof(CanOpenOutputDirectory))]
         private void OpenOutputDirectory()
         {
-            Debug.Write("OpenOutputDirectory");
+            _shellService.OpenFolder(this.OutputDirectory);
         }
 
         private bool CanOpenOutputDirectory()

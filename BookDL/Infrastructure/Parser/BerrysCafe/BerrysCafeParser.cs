@@ -184,7 +184,7 @@ namespace BookDL.Infrastructure.Parser.BerrysCafe
             return keywordsArray[1].Trim();
         }
 
-        public BookInfo BookInfo { get; init; }
+        public BookInfo BookInfo { get; }
         private readonly string _firstEpisodeUrl;
         private readonly IBrowserService _browserService;
 
